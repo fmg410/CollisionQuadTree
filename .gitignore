@@ -1,0 +1,9 @@
+.vscode
+src/Source.exe
+build
+*.jpg
+*.dll
+*.exe
+*.ttf
+*.csv
+build.bat
