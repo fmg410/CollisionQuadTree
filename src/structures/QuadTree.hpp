@@ -3,6 +3,8 @@
 
 #include <vector>
 #include <algorithm>
+#include <iterator> // For std::forward_iterator_tag
+#include <cstddef>  // For std::ptrdiff_t
 
 
 template <typename T>
@@ -23,58 +25,138 @@ public:
         nodes.push_back(n);
     }
 
+    struct Iterator{
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = QuadNode;
+        using pointer           = QuadNode*;  // or also value_type*
+        using reference         = QuadNode&;  // or also value_type&
+
+        Iterator(pointer ptr) : m_ptr(ptr) {}
+
+        reference operator*() const { return *m_ptr; }
+        pointer operator->() { return m_ptr; }
+
+        // Prefix increment
+        Iterator& operator++()
+        {
+            if(m_ptr->parent == m_ptr->parent->parent)
+            {
+                m_ptr == m_ptr->parent;
+                return *this;
+            }
+
+            if(std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr) != m_ptr->parent->children + 3)
+            {
+                m_ptr++;
+                return *this;
+            }
+
+            while(std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr) == m_ptr->parent->children + 3) // TODO replace children with std::array !!!!
+            {
+                if(m_ptr->parent == m_ptr->parent->parent)
+                {
+                    m_ptr == m_ptr->parent;
+                    return *this;
+                }
+                m_ptr = m_ptr->parent;
+            }
+
+            if(m_ptr->parent == m_ptr->parent->parent)
+            {
+                m_ptr = m_ptr->parent;
+                return *this;
+            }
+
+            m_ptr++;
+            return *this;
+
+        }
+
+        /* // Prefix increment
+        Iterator& operator++()
+        {
+            if(m_ptr->parent == m_ptr->parent->parent)
+            {
+                m_ptr == m_ptr->parent;
+                return *this;
+            }
+
+            //while(m_ptr - m_ptr->parent->children == 3)
+            while(std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr) == m_ptr->parent->children + 3) // TODO replace children with std::array !!!!
+            {
+                if(m_ptr->parent == m_ptr->parent->parent)
+                {
+                    m_ptr == m_ptr->parent;
+                    return *this;
+                }
+                m_ptr = m_ptr->parent;
+            }
+
+            if(m_ptr->parent == m_ptr->parent->parent)
+            {
+                m_ptr == m_ptr->parent;
+                return *this;
+            }
+
+            /* while(m_ptr->children[0] != m_ptr->children[1])
+                m_ptr = m_ptr->children[0];
+
+            m_ptr++;// = m_ptr->parent->children[std::find(m_ptr->parent->children, m_ptr->parent->children + 3, m_ptr) + 1];
+
+            return *this;
+        } */
+        /* Iterator& operator++()
+        {
+            if(m_ptr->children[0] == m_ptr->children[1])
+            {
+                pointer tmp = std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr);
+                if(tmp == m_ptr->parent->children + 4)
+                {
+                    m_ptr == &nullNode;
+                    return *this;
+                }
+                else if(tmp < m_ptr->parent->children + 3)
+                {
+                    tmp++;
+                    while(tmp->children[0] != tmp->children[1]) { tmp = tmp->children[0]; }
+                    m_ptr = tmp;
+                    return *this;
+                }
+                else
+                {
+
+                }
+
+            }
+        } */
+
+        // Postfix increment
+        //Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+
+        friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; };
+        friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };
+
+    private:
+
+        pointer m_ptr;
+    };
+
+    //Iterator begin() { return Iterator(&(*nodes.begin())); }
+    Iterator begin()
+    {
+        QuadNode* n = &(*nodes.begin());
+        while(n->children[0] != n->children[1])
+            n = n->children[0];
+        return Iterator(n);
+    }
+    Iterator end()   { return Iterator(&nullNode); } // 200 is out of bounds
+    //Iterator end()   { return Iterator(&nodes.end()); } // 200 is out of bounds
+
     void add(const T& elem)
     {
         add(elem, nodes.at(0));
     }
-
-    /* QuadNode& locateNodeBasedOn(float x, float y, float centerX, float centerY, int modifier = 1)
-    {
-        QuadNode* node = nodes.at(0);
-        float h = 0;
-        float w = 0;
-        while(true)
-        {
-            int child = (x < w) + (y < h) * 3;
-            child -= (child / 4) * 2;
-            if(!node->children[0])
-                return *node;
-            node = node->children[child];
-            if(x < w)
-                w -= width / modifier;
-            else
-                w += width / modifier;
-            if(y < h)
-                h -= height / modifier;
-            else
-                h += height / modifier;
-            modifier *= 2;
-        }
-    }
-
-    QuadNode& ZlocateNodeBasedOn(float x, float y, int modifier = 1)
-    {
-        QuadNode* node = nodes.at(0);
-        float h = 0;
-        float w = 0;
-        while(true)
-        {
-            int child = (x < w) + (y < h) * 3;
-            child -= (child / 4) * 2;
-            if(!node->children[0])
-                return *node;
-            node = node->children[child];
-            if(x < w)
-                w -= width / modifier;
-            else
-                w += width / modifier;
-            if(y < h)
-                h -= height / modifier;
-            else
-                h += height / modifier;
-            modifier *= 2;
-        }
-    } */
 
     QuadNode& locateNodeByPosition(QuadNode& node, float x, float y)
     {
@@ -100,13 +182,6 @@ public:
             divide(n);
             add(data, n);
         }
-        /* if(elements.size() + 1 >= maxElements)
-            return; */
-
-        //elements.insert(++(node.end), data);
-
-        //if((node.end - node.begin) >= threshhold)
-
 
     }
 
