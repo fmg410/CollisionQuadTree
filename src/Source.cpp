@@ -13,9 +13,13 @@
 struct figure{
     float x = 0;
     float y = 0;
+    bool operator==(const figure& f)
+    {
+        return x == f.x && y == f.y;
+    }
 };
 
-int main()
+int main() // TODO: update member (first find member...)
 {
     //QuadNode<figure, 8> node;
     std::array<int, 5> a;
@@ -25,12 +29,22 @@ int main()
     QuadTree<figure> tree;
     /* figure f{12, 3};
     tree.add(f); */
-    for(int i = 0; i < 8; i++) // breaks starting at 10
+    /* for(int i = 0; i < 8; i++) // breaks starting at 10
     {
         tree.add(figure{float(i), float(i+5)});
     }
     tree.add(figure{float(8), float(8+5)});
-    tree.add(figure{float(-8), float(-8+5)});
+    tree.add(figure{float(-8), float(-8+5)}); */
+    //srand(time(NULL));
+    srand(0);
+    for(int i = 0; i < 40; i++)
+    {
+        figure f{float(rand() % 20), float(rand() % 20)};
+        if(!tree.contains(f))
+            tree.add(f);
+        else
+            i--;
+    }
     auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
     //std::cout << node.toString();
 
@@ -39,20 +53,26 @@ int main()
     int* dwa = tab + 3;
     std::cout << "   " << dwa - jed; */
 
+    int count = 0;
     int num = 0;
     for(auto& node : tree)
     {
         for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
+        {
             std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
+            count++;
+        }
         num++;
         //std::cout << node.data.at(0).x << " " << node.data.at(0).y << '\n';
     }
+
+    std::cout << "Count: " << count << " Test: " << tree.test << '\n';
 
     #ifndef NO_UI
 
     sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
     //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
-    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(30.f, 30.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
     window.setView(view);
 
     // run the program as long as the window is open

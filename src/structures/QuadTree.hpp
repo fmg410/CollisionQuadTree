@@ -16,6 +16,7 @@ public:
     using QuadNode = QuadNode<T, threshhold>;
     std::vector<QuadNode> nodes;
     QuadNode nullNode;
+    int test = 0;
 
     QuadTree()
     {
@@ -69,6 +70,14 @@ public:
             if(m_ptr->parent == m_ptr->parent->parent)
             {
                 m_ptr = m_ptr->parent;
+                return *this;
+            }
+
+            if(std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr) != m_ptr->parent->children + 3) // well this one was missing
+            {
+                m_ptr++;
+                while(m_ptr->children[0] != m_ptr->children[1])
+                    m_ptr = m_ptr->children[0];
                 return *this;
             }
 
@@ -174,6 +183,19 @@ public:
         return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y);
     }
 
+    bool contains(QuadNode& node, const T& val)
+    {
+        QuadNode& n = locateNodeByPosition(node, val.x, val.y);
+        if(std::find(n.data.begin(), n.data.begin() + n.elements, val) != n.data.begin() + n.elements)
+            return true;
+        return false;
+    }
+
+    bool contains(const T& val)
+    {
+        return contains(nodes.at(0), val);
+    }
+
     void add(const T& data, QuadNode& node)
     {
         QuadNode& n = locateNodeByPosition(nodes.at(0), data.x, data.y);
@@ -181,6 +203,7 @@ public:
         {
             *(n.lastElement()) = data;
             n.elements++;
+            test++;
         }
         else
         {
