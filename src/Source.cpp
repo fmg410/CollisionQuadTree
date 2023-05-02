@@ -2,8 +2,13 @@
 #include <array>
 #include <iostream>
 #include "structures/QuadTree.hpp"
-/* #include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp> */
+
+//#define NO_UI
+
+#ifndef NO_UI
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#endif
 
 struct figure{
     float x = 0;
@@ -25,6 +30,7 @@ int main()
         tree.add(figure{float(i), float(i+5)});
     }
     tree.add(figure{float(8), float(8+5)});
+    tree.add(figure{float(-8), float(-8+5)});
     auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
     //std::cout << node.toString();
 
@@ -42,7 +48,12 @@ int main()
         //std::cout << node.data.at(0).x << " " << node.data.at(0).y << '\n';
     }
 
-    /* sf::RenderWindow window(sf::VideoMode(800, 600), "My window");
+    #ifndef NO_UI
+
+    sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
+    //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(30.f, 30.f));
+    window.setView(view);
 
     // run the program as long as the window is open
     while (window.isOpen())
@@ -61,10 +72,27 @@ int main()
 
         // draw everything here...
         // window.draw(...);
+        sf::RectangleShape center(sf::Vector2f(1.f, 1.f));
+        center.setFillColor(sf::Color::Green);
+        center.setPosition(sf::Vector2f(0.f, 0.f));
+        center.setOrigin(sf::Vector2f(0.5f, 0.5f));
+        window.draw(center);
 
+        for(auto& node : tree)
+        {
+            for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
+            {
+                sf::RectangleShape rect(sf::Vector2f(1.f, 1.f));
+                rect.setPosition(sf::Vector2f(itr->x, itr->y));
+                rect.setFillColor(sf::Color::Red);
+                rect.setOrigin(sf::Vector2f(0.5f, 0.5f));
+                window.draw(rect);
+            }
+        }
 
         // end the current frame
         window.display();
-    } */
+    }
+    #endif
 
 }

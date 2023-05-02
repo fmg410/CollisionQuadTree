@@ -49,6 +49,8 @@ public:
             if(std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr) != m_ptr->parent->children + 3)
             {
                 m_ptr++;
+                while(m_ptr->children[0] != m_ptr->children[1])
+                    m_ptr = m_ptr->children[0];
                 return *this;
             }
 
@@ -61,6 +63,8 @@ public:
                 }
                 m_ptr = m_ptr->parent;
             }
+
+            //return this->operator++();
 
             if(m_ptr->parent == m_ptr->parent->parent)
             {
@@ -164,9 +168,10 @@ public:
             return locateNodeByPosition(*(node.parent), x, y);
         if(node.children[0] == node.children[1])
             return node;
-        int child = (x < node.x) + (y < node.y) * 3;
+        /* int child = (x < node.x) + (y < node.y) * 3;
         child -= (child / 4) * 2;
-        return locateNodeByPosition(*(node.children[child]), x, y);
+        return locateNodeByPosition(*(node.children[child]), x, y); */
+        return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y);
     }
 
     void add(const T& data, QuadNode& node)
@@ -212,6 +217,8 @@ public:
             n->elements++;
         }
 
+        node.elements = 0;
+
         return true;
     }
         /* for(int i = 0; i < 3; i++)
@@ -240,14 +247,26 @@ public:
     // return range [0, 3]
     int QuadrantByPoint(float centerX, float centerY, float posX, float posY)
     {
-        int quadrant = (centerX < posX) + (centerY < posY) * 3;
+        /* int quadrant = (centerX < posX) + (centerY < posY) * 3;
         quadrant -= (quadrant / 4) * 2;
-        return quadrant;
+        return quadrant; */
+        if(posX >= centerX && posY > centerY)
+            return 0;
+        else if(posX < centerX && posY >= centerY)
+            return 1;
+        else if(posX <= centerX && posY < centerY)
+            return 2;
+        return 3;
     }
 
     int QuadrantByPoint(float centerX, float centerY, QuadNode& node)
     {
         return QuadrantByPoint(centerX, centerY, node.x, node.y);
+    }
+
+    int QuadrantByPoint(QuadNode& center, float posX, float posY)
+    {
+        return QuadrantByPoint(center.x, center.y, posX, posY);
     }
 
     int QuadrantByPoint(QuadNode& reference, QuadNode& node)
