@@ -37,13 +37,13 @@ int main() // TODO: update member (first find member...)
     tree.add(figure{float(-8), float(-8+5)}); */
     //srand(time(NULL));
     srand(0);
-    for(int i = 0; i < 40; i++)
+    for(int i = 0; i < 300; i++)
     {
-        figure f{float(rand() % 20), float(rand() % 20)};
-        if(!tree.contains(f))
+        figure f{float(rand() % 40 - 19), float(rand() % 40) - 19};
+        //if(!tree.contains(f))
             tree.add(f);
-        else
-            i--;
+        //else
+        //    i--;
     }
     auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
     //std::cout << node.toString();
@@ -72,7 +72,7 @@ int main() // TODO: update member (first find member...)
 
     sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
     //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
-    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(50.f, 50.f));
     window.setView(view);
 
     // run the program as long as the window is open
@@ -92,14 +92,23 @@ int main() // TODO: update member (first find member...)
 
         // draw everything here...
         // window.draw(...);
-        sf::RectangleShape center(sf::Vector2f(1.f, 1.f));
+        /* sf::RectangleShape center(sf::Vector2f(1.f, 1.f));
         center.setFillColor(sf::Color::Green);
         center.setPosition(sf::Vector2f(0.f, 0.f));
         center.setOrigin(sf::Vector2f(0.5f, 0.5f));
-        window.draw(center);
+        window.draw(center); */
 
+        unsigned int blue = 0;
         for(auto& node : tree)
         {
+            sf::RectangleShape background;
+            background.setSize(sf::Vector2f(node.width, node.height));
+            background.setOrigin(sf::Vector2f(node.width/2, node.height/2));
+            background.setPosition(node.x, node.y);
+            background.setFillColor(sf::Color(0, 0, blue));
+            blue += 10;
+            blue %= 250;
+            window.draw(background);
             for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
             {
                 sf::RectangleShape rect(sf::Vector2f(1.f, 1.f));
