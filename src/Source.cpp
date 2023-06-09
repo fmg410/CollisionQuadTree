@@ -39,7 +39,7 @@ int main() // TODO: update member (first find member...)
     srand(0);
     for(int i = 0; i < 300; i++)
     {
-        figure f{float(rand() % 40 - 19), float(rand() % 40) - 19};
+        figure f{float(rand() % 35 - 19), float(rand() % 35) - 19};
         //if(!tree.contains(f))
             tree.add(f);
         //else
@@ -59,7 +59,7 @@ int main() // TODO: update member (first find member...)
     {
         for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
         {
-            std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
+            //std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
             count++;
         }
         num++;
@@ -72,7 +72,7 @@ int main() // TODO: update member (first find member...)
 
     sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
     //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
-    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(50.f, 50.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(100.f, 100.f));
     window.setView(view);
 
     // run the program as long as the window is open
@@ -85,6 +85,19 @@ int main() // TODO: update member (first find member...)
             // "close requested" event: we close the window
             if (event.type == sf::Event::Closed)
                 window.close();
+            if (event.type == sf::Event::KeyPressed)
+            {
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
+                {
+                    sf::Texture texture;
+                    texture.create(window.getSize().x, window.getSize().y);
+                    texture.update(window);
+                    if (texture.copyToImage().saveToFile("ss.jpg"))
+                    {
+                        std::cout << "screenshot saved to ss.jpg" << std::endl;
+                    }
+                }
+            }
         }
 
         // clear the window with black color
@@ -98,24 +111,32 @@ int main() // TODO: update member (first find member...)
         center.setOrigin(sf::Vector2f(0.5f, 0.5f));
         window.draw(center); */
 
-        unsigned int blue = 0;
+        unsigned int color = 0;
+        unsigned int which = 0;
         for(auto& node : tree)
         {
             sf::RectangleShape background;
-            background.setSize(sf::Vector2f(node.width, node.height));
-            background.setOrigin(sf::Vector2f(node.width/2, node.height/2));
-            background.setPosition(node.x, node.y);
-            background.setFillColor(sf::Color(0, 0, blue));
-            blue += 10;
-            blue %= 250;
+            background.setSize(sf::Vector2f(node.width * 2, node.height * 2));
+            //background.setOrigin(sf::Vector2f(node.width, node.height));
+            background.setPosition(node.x * 2 - node.width, node.y * 2 - node.height);
+            background.setFillColor(sf::Color(color + (which == 0 ? 10 : 0), color + (which == 1 ? 10 : 0), color + (which == 2 ? 10 : 0)));
+            which++;
+            which %= 3;
+            if(which == 0)
+            {
+                color += 20;
+                color %= 250;
+            }
             window.draw(background);
             for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
             {
                 sf::RectangleShape rect(sf::Vector2f(1.f, 1.f));
-                rect.setPosition(sf::Vector2f(itr->x, itr->y));
+                rect.setPosition(sf::Vector2f(itr->x * 2, itr->y * 2));
                 rect.setFillColor(sf::Color::Red);
-                rect.setOrigin(sf::Vector2f(0.5f, 0.5f));
+                //rect.setOrigin(sf::Vector2f(0.5f, 0.5f));
                 window.draw(rect);
+                if(abs(itr->x) > 19 || abs(itr->y) > 19)
+                    std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
             }
         }
 
