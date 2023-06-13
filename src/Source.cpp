@@ -10,6 +10,33 @@
 #include <SFML/Graphics.hpp>
 #endif
 
+static const float VIEW_HEIGHT = 600.f;
+
+void resizeView(const sf::RenderWindow& window, sf::View& view)
+{
+	float aspectRatio = float(window.getSize().x) / float(window.getSize().y);
+	view.setSize(VIEW_HEIGHT * aspectRatio, VIEW_HEIGHT);
+}
+
+void zoomViewAt(sf::Vector2i pixel, sf::RenderWindow& window, float zoom, sf::View& view, int delta)
+{
+	// delta < 0 -> zoom out
+	// zoom > 0 -> zoom out
+	if (delta > 0)
+	{
+		const sf::Vector2f beforeCoord{ window.mapPixelToCoords(pixel) };
+		view.zoom(1.0f / zoom);
+		window.setView(view);
+		const sf::Vector2f afterCoord{ window.mapPixelToCoords(pixel) };
+		const sf::Vector2f offsetCoords{ beforeCoord - afterCoord };
+		view.move(offsetCoords);
+		window.setView(view);
+	}
+	else if (delta < 0)
+	{
+		view.zoom(zoom);
+	}
+}
 struct figure{
     float x = 0;
     float y = 0;
@@ -85,6 +112,12 @@ int main() // TODO: update member (first find member...)
             // "close requested" event: we close the window
             if (event.type == sf::Event::Closed)
                 window.close();
+
+            if (event.type == sf::Event::MouseWheelScrolled)
+			{
+				zoomViewAt({ event.mouseWheelScroll.x, event.mouseWheelScroll.y }, window, 1.1f, view, event.mouseWheelScroll.delta);
+			}
+
             if (event.type == sf::Event::KeyPressed)
             {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
@@ -98,9 +131,14 @@ int main() // TODO: update member (first find member...)
                     }
                 }
             }
+
+            if (event.type == sf::Event::Resized)
+				resizeView(window, view);
+
         }
 
         // clear the window with black color
+        window.setView(view);
         window.clear(sf::Color::Black);
 
         // draw everything here...

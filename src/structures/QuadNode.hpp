@@ -10,8 +10,8 @@ struct QuadNode{
     float y{};
     float width{};
     float height{};
-    QuadNode<T, size>* (children[4]) = {this, this, this, this};
-    QuadNode<T, size>* parent = this;
+    QuadNode<T, size>* children[4] = {this, this, this, this}; // non-owning pointers
+    QuadNode<T, size>* parent = this; // non-owning pointer
     /* std::vector<T>::iterator begin;
     std::vector<T>::iterator end; */
     std::array<T, size> data;
