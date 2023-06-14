@@ -2,6 +2,8 @@
 #include <array>
 #include <iostream>
 #include "structures/QuadTree.hpp"
+#include "physics/functions.hpp"
+#include <cmath>
 
 //#define NO_UI
 
@@ -10,8 +12,95 @@
 #include <SFML/Graphics.hpp>
 #endif
 
+struct RainbowGenerator{
+    unsigned char r = 0;
+    unsigned char g = 0;
+    unsigned char b = 0;
+    unsigned int cnt = 0;
+    const float freq = .01f;
+    RainbowGenerator()
+    {
+        r = std::sin(freq * cnt + 0) * 127 + 128;
+        g = std::sin(freq * cnt + 2) * 127 + 128;
+        b = std::sin(freq * cnt + 4) * 127 + 128;
+
+        if (cnt++ >= -1U)
+        {
+                cnt = 0;
+        }
+    }
+    //char which = 0;
+    RainbowGenerator& operator++()
+    {
+        r = std::sin(freq * cnt + 0) * 127 + 128;
+        g = std::sin(freq * cnt + 2) * 127 + 128;
+        b = std::sin(freq * cnt + 4) * 127 + 128;
+
+        if (cnt++ >= -1U)
+        {
+                cnt = 0;
+        }
+        /* if(which == 0)
+            b += 5;
+        else if(which == 1)
+            g += 5;
+
+        if(b == 240)
+        {
+            b = 30;
+            which = 1;
+        }
+        if(g == 240)
+        {
+            g = 30;
+            which = 0;
+        } */
+
+        /* if(b != 225)
+            b += 15;
+        if(g != 225 && b == 225)
+            g += 15;
+        if(g == 225 && b == 225)
+            b = 0; */
+       /*  if(b == 225 && g != 225)
+            g += 15;
+        else if(b == 225)
+            b = 0;
+        if(g == 225 && b != 225)
+            b += 15;
+        else if(g == 225)
+            g = 0; */
+        /* if(r == 230)
+        {
+            if(g == 230)
+            {
+                if(b == 230)
+                {
+                    r = 10;
+                    g = 10;
+                    b = 10;
+                }
+                else
+                {
+                    b+=15;
+                }
+            }
+            else
+            {
+                g+=15;
+            }
+        }
+        else
+        {
+            r+=15;
+        } */
+        return *this;
+    }
+};
+
 static const float VIEW_HEIGHT = 600.f;
 
+#ifndef NO_UI
 void resizeView(const sf::RenderWindow& window, sf::View& view)
 {
 	float aspectRatio = float(window.getSize().x) / float(window.getSize().y);
@@ -37,14 +126,19 @@ void zoomViewAt(sf::Vector2i pixel, sf::RenderWindow& window, float zoom, sf::Vi
 		view.zoom(zoom);
 	}
 }
+#endif
 struct figure{
     float x = 0;
     float y = 0;
+    float velX = 0.1f;
+    float velY = 0.1f;
     bool operator==(const figure& f)
     {
         return x == f.x && y == f.y;
     }
 };
+
+const int CURRENT_ELEMENTS = 9;
 
 int main() // TODO: update member (first find member...)
 {
@@ -53,7 +147,7 @@ int main() // TODO: update member (first find member...)
     a.at(0) = 3;
 
     //std::cout << a.size() << " " << a.max_size();
-    QuadTree<figure> tree;
+    QuadTree<figure, 100000> tree;
     /* figure f{12, 3};
     tree.add(f); */
     /* for(int i = 0; i < 8; i++) // breaks starting at 10
@@ -64,15 +158,17 @@ int main() // TODO: update member (first find member...)
     tree.add(figure{float(-8), float(-8+5)}); */
     //srand(time(NULL));
     srand(0);
-    for(int i = 0; i < 300; i++)
+    for(int i = 0; i < CURRENT_ELEMENTS; i++)
     {
-        figure f{float(rand() % 35 - 19), float(rand() % 35) - 19};
+        figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
         //if(!tree.contains(f))
             tree.add(f);
         //else
         //    i--;
     }
-    auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
+    //auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
+    /* for(int i = 0; i < CURRENT_ELEMENTS; i++)
+        tree.add(figure{float(-80.f + i), float(-80.f + i), 0.1f, 0.2f}); */
     //std::cout << node.toString();
 
     /* int tab[5] = {1, 2, 3, 4, 5};
@@ -93,14 +189,23 @@ int main() // TODO: update member (first find member...)
         //std::cout << node.data.at(0).x << " " << node.data.at(0).y << '\n';
     }
 
-    std::cout << "Count: " << count << " Test: " << tree.test << '\n';
-
     #ifndef NO_UI
+
+    bool pause = false;
 
     sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
     //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
-    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(100.f, 100.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(200.f, 200.f));
     window.setView(view);
+
+    sf::Clock clock;
+    float lastTime = 0;
+    sf::Font font;
+    if (!font.loadFromFile("Arialn.ttf"))
+    {
+        return 1;
+    }
+    window.setFramerateLimit(60);
 
     // run the program as long as the window is open
     while (window.isOpen())
@@ -130,6 +235,51 @@ int main() // TODO: update member (first find member...)
                         std::cout << "screenshot saved to ss.jpg" << std::endl;
                     }
                 }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::N))
+                {
+                    figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
+                    tree.add(f);
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+                {
+                    auto c = tree.begin();
+                    while((*c).elements == 0)
+                        c.operator++();
+                    (*c).data.at(0).y -= 1.f;
+
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+                {
+                    auto c = tree.begin();
+                    while((*c).elements == 0)
+                        c.operator++();
+                    (*c).data.at(0).y += 1.f;
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+                {
+                    auto c = tree.begin();
+                    while((*c).elements == 0)
+                        c.operator++();
+                    (*c).data.at(0).x -= 1.f;
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+                {
+                    auto c = tree.begin();
+                    while((*c).elements == 0)
+                        c.operator++();
+                    (*c).data.at(0).x += 1.f;
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+                {
+                    auto c = tree.begin();
+                    while(c != tree.end() && (*c).elements == 0)
+                        c.operator++();
+                    tree.deleteData(*c, 0);
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+                {
+                    pause = !pause;
+                }
             }
 
             if (event.type == sf::Event::Resized)
@@ -149,22 +299,35 @@ int main() // TODO: update member (first find member...)
         center.setOrigin(sf::Vector2f(0.5f, 0.5f));
         window.draw(center); */
 
-        unsigned int color = 0;
+        num = 0;
+        if(!pause)
+        {
+            for(auto& node : tree)
+            {
+                for(int i = 0; i < node.elements; i++)
+                {
+                    updateSpeed(node.data.at(i));
+                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                    //std::cout << "Node " << num << ": " << node.data.at(i).x << " " << node.data.at(i).y << '\n';
+                    if(tree.correctDataPosition(node, i))
+                        i--;
+                }
+                num++;
+            }
+            tree.mergeTree();
+        }
+
         unsigned int which = 0;
+        num = 0;
+        RainbowGenerator color;
         for(auto& node : tree)
         {
             sf::RectangleShape background;
             background.setSize(sf::Vector2f(node.width * 2, node.height * 2));
             //background.setOrigin(sf::Vector2f(node.width, node.height));
             background.setPosition(node.x * 2 - node.width, node.y * 2 - node.height);
-            background.setFillColor(sf::Color(color + (which == 0 ? 10 : 0), color + (which == 1 ? 10 : 0), color + (which == 2 ? 10 : 0)));
-            which++;
-            which %= 3;
-            if(which == 0)
-            {
-                color += 20;
-                color %= 250;
-            }
+            background.setFillColor(sf::Color(color.r, color.g, color.b));
+            color.operator++();
             window.draw(background);
             for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
             {
@@ -173,10 +336,31 @@ int main() // TODO: update member (first find member...)
                 rect.setFillColor(sf::Color::Red);
                 //rect.setOrigin(sf::Vector2f(0.5f, 0.5f));
                 window.draw(rect);
-                if(abs(itr->x) > 19 || abs(itr->y) > 19)
-                    std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
+                //if(abs(itr->x) > 19 || abs(itr->y) > 19)
+                    //std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
             }
+            num++;
         }
+
+        float currentTime = clock.restart().asSeconds();
+        float fps = 1.f / (currentTime - lastTime);
+        lastTime = currentTime;
+
+        {sf::Text text;
+        text.setFont(font);
+        text.setString(std::to_string(fps));
+        text.setCharacterSize(12);
+        text.setFillColor(sf::Color::White);
+        text.setPosition(sf::Vector2f(110.f, 110.f));
+        window.draw(text);}
+
+        {sf::Text text;
+        text.setFont(font);
+        text.setString(std::to_string(tree.nodes.size()));
+        text.setCharacterSize(12);
+        text.setFillColor(sf::Color::White);
+        text.setPosition(sf::Vector2f(-110.f, -110.f));
+        window.draw(text);}
 
         // end the current frame
         window.display();

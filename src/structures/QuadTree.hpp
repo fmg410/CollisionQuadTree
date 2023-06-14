@@ -5,9 +5,10 @@
 #include <algorithm>
 #include <iterator> // For std::forward_iterator_tag
 #include <cstddef>  // For std::ptrdiff_t
+#include <functional>
 
 
-template <typename T>
+template <typename T, int MAX_NODES>
 class QuadTree{
 
 public:
@@ -17,14 +18,39 @@ public:
     std::vector<QuadNode> nodes;
     QuadNode nullNode;
     QuadNode* freeList = nullptr;
-    int test = 0;
+    size_t allElements = 0;
 
     QuadTree()
     {
-        nodes.reserve(10000);
+        nodes.reserve(MAX_NODES);
         QuadNode n(0.f, 0.f, 100.f, 100.f, nullNode);
         //QuadNode c = std::move(n);
         nodes.push_back(n);
+    }
+
+    /* float getDistance(QuadNode& node, float x, float y)
+    {
+        return std::sqrt(std::pow(node.x - x, 2) + std::pow(node.y - y, 2));
+    } */
+
+    float getRootX()
+    {
+        return nodes.at(0).x;
+    }
+
+    float getRootY()
+    {
+        return nodes.at(0).y;
+    }
+
+    float getRootWidth()
+    {
+        return nodes.at(0).width;
+    }
+
+    float getRootHeight()
+    {
+        return nodes.at(0).height;
     }
 
     struct Iterator{
@@ -44,7 +70,7 @@ public:
         {
             if(m_ptr->parent == m_ptr->parent->parent)
             {
-                m_ptr == m_ptr->parent;
+                m_ptr = m_ptr->parent;
                 return *this;
             }
 
@@ -58,11 +84,11 @@ public:
 
             while(std::find(m_ptr->parent->children, m_ptr->parent->children + 4, m_ptr) == m_ptr->parent->children + 3) // TODO replace children with std::array !!!!
             {
-                if(m_ptr->parent == m_ptr->parent->parent)
+                /* if(m_ptr->parent == m_ptr->parent->parent)
                 {
-                    m_ptr == m_ptr->parent;
+                    //m_ptr == m_ptr->parent;
                     return *this;
-                }
+                } */
                 m_ptr = m_ptr->parent;
             }
 
@@ -106,7 +132,7 @@ public:
             n = n->children[0];
         return Iterator(n);
     }
-    Iterator end()   { return Iterator(&nullNode); } // 200 is out of bounds
+    Iterator end()   { return Iterator(&nullNode);} // 200 is out of bounds
 
     void add(const T& elem)
     {
@@ -156,12 +182,14 @@ public:
 
     void add(const T& data, QuadNode& node)
     {
+        if(allElements >= MAX_NODES)
+            return;
         QuadNode& n = locateNodeByPosition(nodes.at(0), data.x, data.y);
         if(n.elements < threshhold)
         {
             *(n.lastElement()) = data;
             n.elements++;
-            test++;
+            allElements++;
         }
         else
         {
@@ -176,14 +204,18 @@ public:
         if(freeList)
         {
             node.children[0] = freeList;
-            node.children[0]->parent = &node;
             node.children[1] = freeList + 1;
-            node.children[1]->parent = &node;
             node.children[2] = freeList + 2;
-            node.children[2]->parent = &node;
             node.children[3] = freeList + 3;
-            node.children[3]->parent = &node;
             freeList = freeList->parent;
+            *node.children[0] = QuadNode(node.x + node.width/4, node.y + node.height/4, node.width/2, node.height/2, nullNode);
+            node.children[0]->parent = &node;
+            *node.children[1] = QuadNode(node.x - node.width/4, node.y + node.height/4, node.width/2, node.height/2, nullNode);
+            node.children[1]->parent = &node;
+            *node.children[2] = QuadNode(node.x - node.width/4, node.y - node.height/4, node.width/2, node.height/2, nullNode);
+            node.children[2]->parent = &node;
+            *node.children[3] = QuadNode(node.x + node.width/4, node.y - node.height/4, node.width/2, node.height/2, nullNode);
+            node.children[3]->parent = &node;
             return true;
         }
         node.children[0] = &(nodes.emplace_back(node.x + node.width/4, node.y + node.height/4, node.width/2, node.height/2, nullNode));
@@ -199,14 +231,7 @@ public:
 
     bool divide(QuadNode& node)
     {
-        node.children[0] = &(nodes.emplace_back(node.x + node.width/4, node.y + node.height/4, node.width/2, node.height/2, nullNode));
-        node.children[1] = &(nodes.emplace_back(node.x - node.width/4, node.y + node.height/4, node.width/2, node.height/2, nullNode));
-        node.children[2] = &(nodes.emplace_back(node.x - node.width/4, node.y - node.height/4, node.width/2, node.height/2, nullNode));
-        node.children[3] = &(nodes.emplace_back(node.x + node.width/4, node.y - node.height/4, node.width/2, node.height/2, nullNode));
-        node.children[0]->parent = &node;
-        node.children[1]->parent = &node;
-        node.children[2]->parent = &node;
-        node.children[3]->parent = &node;
+        generateChildren(node);
 
         std::sort(node.data.begin(), node.data.end(), [&](auto& first, auto& second){
             return QuadrantByPoint(node, first) > QuadrantByPoint(node, second);
@@ -236,6 +261,8 @@ public:
             return 0;
         for(int i = 0; i < 4; i++)
         {
+            if(!checkIfLeaf(*(node.children[i])))
+                return -1;
             sum += node.children[i]->elements;
         }
         return sum;
@@ -246,6 +273,18 @@ public:
         if(node.children[0] == node.children[1])
             return false;
         if(calculateElementsOfChildren(node) <= threshhold)
+            return true;
+        return false;
+    }
+
+    bool withinThresholdAll(QuadNode& node)
+    {
+        if(node.parent == node.parent->parent)
+            return false;
+        if(!checkIfLeaf(node))
+            for(int i = 0; i < 4; i++)
+                return withinThresholdAll(*(node.children[i]));
+        if(calculateElementsOfNeighbours(node) <= threshhold)
             return true;
         return false;
     }
@@ -271,12 +310,15 @@ public:
     size_t calculateElementsOfNeighbours(QuadNode& node)
     {
         size_t sum = 0;
-        if(node.children[0] == node.children[1])
-            return 0;
-        for(int i = 0; i < 4; i++)
-        {
-            sum += (&node + i)->elements;
-        }
+        if(node.parent == node.parent->parent)
+            return -1;
+        if(checkIfLeaf(node))
+            for(int i = 0; i < 4; i++)
+            {
+                sum += (&node - whichChild(node) + i)->elements;
+            }
+        else
+            return -1;
         return sum;
     }
 
@@ -296,7 +338,7 @@ public:
         return false;
     }
 
-    void merge(QuadNode& node)
+    /* void merge(QuadNode& node)
     {
         if(!checkIfLeaf(node))
         {
@@ -311,16 +353,37 @@ public:
             node.elements += node.children[i]->elements;
             deleteChildren(node);
         }
+    } */
+
+    void merge(QuadNode& node)
+    {
+        for(int i = 0; i < 4; i++)
+            if(!checkIfLeaf(*(node.children[i])))
+                merge(*(node.children[i]));
+
+        if(!withinThreshold(node))
+            return;
+
+        for(int i = 0; i < 4; i++)
+        {
+            std::copy_n(node.children[i]->data.begin(), node.children[i]->elements, node.data.begin() + node.elements);
+            node.elements += node.children[i]->elements;
+        }
+        deleteChildren(node);
     }
 
     bool deleteChildren(QuadNode& node)
     {
-        node.children[0] = QuadNode();
-        node.children[1] = QuadNode();
-        node.children[2] = QuadNode();
-        node.children[3] = QuadNode();
+        *node.children[0] = QuadNode();
+        *node.children[1] = QuadNode();
+        *node.children[2] = QuadNode();
+        *node.children[3] = QuadNode();
         node.children[0]->parent = freeList;
         freeList = node.children[0];
+        node.children[0] = &nullNode;
+        node.children[1] = &nullNode;
+        node.children[2] = &nullNode;
+        node.children[3] = &nullNode;
         return true;
     }
 
@@ -339,10 +402,44 @@ public:
             data = node.data.at(index);
             std::copy(node.data.begin() + index + 1, node.data.begin() + node.elements, node.data.begin() + index);
             node.elements--;
-            if(withinThreshold(*node.parent))
-                merge(*node.parent);
+            allElements--;
+            /* if(withinThreshold(*node.parent))
+                merge(*node.parent); */
         }
         return data;
+    }
+
+    bool deleteData(QuadNode& node, size_t index)
+    {
+        if(index < node.elements)
+        {
+            std::copy(node.data.begin() + index + 1, node.data.begin() + node.elements, node.data.begin() + index);
+            node.elements--;
+            /* if(withinThresholdAll(*node.parent))
+                merge(*node.parent); */
+            allElements--;
+            return true;
+        }
+        return false;
+    }
+
+    bool deleteDataFast(QuadNode& node, size_t index)
+    {
+        if(index < node.elements)
+        {
+            std::copy(node.data.begin() + index + 1, node.data.begin() + node.elements, node.data.begin() + index);
+            node.elements--;
+            /* if(withinThresholdNeighbours(*node.parent))
+                merge(*node.parent); */
+            allElements--;
+            return true;
+        }
+        return false;
+    }
+
+    void mergeTree()
+    {
+        merge(nodes.at(0));
     }
 
     T removeDataFast(QuadNode& node, size_t index)
@@ -357,6 +454,48 @@ public:
                 merge(*node.parent);
         }
         return data;
+    }
+
+    bool verifyDataPosition(QuadNode& node, size_t index)
+    {
+        if(index < node.elements)
+        {
+            return !(node.data.at(index).x < node.x - node.width/2 || node.data.at(index).x > node.x + node.width/2 || node.data.at(index).y < node.y - node.height/2 || node.data.at(index).y > node.y + node.height/2);
+
+            /* if(QuadrantByPoint(node, node.data.at(index)) == QuadrantByPoint(node, node.data.at(index), node.data.at(index).x, node.data.at(index).y))
+                return true; */
+        }
+        return false;
+    }
+
+    bool correctDataPosition(QuadNode& node, size_t index)
+    {
+        if(index < node.elements)
+        {
+            if(!verifyDataPosition(node, index))
+            {
+                add(getData(node, index));
+                deleteData(node, index);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void updateElement(QuadNode& node, size_t index, std::function<void(QuadNode&)> func)
+    {
+        if(index < node.elements)
+        {
+            func(node.data.at(index));
+        }
+    }
+
+    void updateElements(QuadNode& node, std::function<void(QuadNode&)> func)
+    {
+        for(int i = 0; i < node.elements; i++)
+        {
+            func(node.data.at(i));
+        }
     }
 
     /* bool deleteChildren(QuadNode& node)
