@@ -20,80 +20,17 @@ struct RainbowGenerator{
     const float freq = .01f;
     RainbowGenerator()
     {
-        r = std::sin(freq * cnt + 0) * 127 + 128;
-        g = std::sin(freq * cnt + 2) * 127 + 128;
-        b = std::sin(freq * cnt + 4) * 127 + 128;
-
-        if (cnt++ >= -1U)
-        {
-                cnt = 0;
-        }
+        this->operator++();
     }
-    //char which = 0;
     RainbowGenerator& operator++()
     {
-        r = std::sin(freq * cnt + 0) * 127 + 128;
+        b = std::sin(freq * cnt + 0) * 127 + 128;
         g = std::sin(freq * cnt + 2) * 127 + 128;
-        b = std::sin(freq * cnt + 4) * 127 + 128;
-
+        r = std::sin(freq * cnt + 4) * 127 + 128;
         if (cnt++ >= -1U)
         {
                 cnt = 0;
         }
-        /* if(which == 0)
-            b += 5;
-        else if(which == 1)
-            g += 5;
-
-        if(b == 240)
-        {
-            b = 30;
-            which = 1;
-        }
-        if(g == 240)
-        {
-            g = 30;
-            which = 0;
-        } */
-
-        /* if(b != 225)
-            b += 15;
-        if(g != 225 && b == 225)
-            g += 15;
-        if(g == 225 && b == 225)
-            b = 0; */
-       /*  if(b == 225 && g != 225)
-            g += 15;
-        else if(b == 225)
-            b = 0;
-        if(g == 225 && b != 225)
-            b += 15;
-        else if(g == 225)
-            g = 0; */
-        /* if(r == 230)
-        {
-            if(g == 230)
-            {
-                if(b == 230)
-                {
-                    r = 10;
-                    g = 10;
-                    b = 10;
-                }
-                else
-                {
-                    b+=15;
-                }
-            }
-            else
-            {
-                g+=15;
-            }
-        }
-        else
-        {
-            r+=15;
-        } */
         return *this;
     }
 };
@@ -138,7 +75,7 @@ struct figure{
     }
 };
 
-const int CURRENT_ELEMENTS = 9;
+const int CURRENT_ELEMENTS = 2200;
 
 int main() // TODO: update member (first find member...)
 {
@@ -166,6 +103,20 @@ int main() // TODO: update member (first find member...)
         //else
         //    i--;
     }
+
+    /* for(int j = 1000; j < CURRENT_ELEMENTS; j += 100)
+    {
+        std::cout << "MAX: " << j << std::endl;
+        for(int i = 0; i < j; i++)
+        {
+            figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
+            //if(!tree.contains(f))
+                tree.add(f);
+            //else
+            //    i--;
+        }
+        tree = QuadTree<figure, 100000>();
+    } */
     //auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
     /* for(int i = 0; i < CURRENT_ELEMENTS; i++)
         tree.add(figure{float(-80.f + i), float(-80.f + i), 0.1f, 0.2f}); */
@@ -237,8 +188,12 @@ int main() // TODO: update member (first find member...)
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::N))
                 {
+                    for(int z = 0; z < 100; z++)
+                    {
                     figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
                     tree.add(f);
+
+                    }
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
                 {
@@ -359,7 +314,7 @@ int main() // TODO: update member (first find member...)
         text.setString(std::to_string(tree.nodes.size()));
         text.setCharacterSize(12);
         text.setFillColor(sf::Color::White);
-        text.setPosition(sf::Vector2f(-110.f, -110.f));
+        text.setPosition(sf::Vector2f(-130.f, -130.f));
         window.draw(text);}
 
         // end the current frame

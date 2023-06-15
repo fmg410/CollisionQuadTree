@@ -498,6 +498,121 @@ public:
         }
     }
 
+    bool moveElement(QuadNode& node, size_t index, QuadNode& target)
+    {
+        if(index < node.elements)
+        {
+            *(target.lastElement()) = std::move(node.data.at(index));
+            target.elements++;
+            std::copy(node.data.begin() + index + 1, node.data.begin() + node.elements, node.data.begin() + index);
+            node.elements--;
+            if(withinThreshold(*node.parent))
+                merge(*node.parent);
+            return true;
+        }
+        return false;
+    }
+
+    bool moveElementFast(QuadNode& node, size_t index, QuadNode& target)
+    {
+        if(index < node.elements)
+        {
+            *(target.lastElement()) = std::move(node.data.at(index));
+            target.elements++;
+            std::copy(node.data.begin() + index + 1, node.data.begin() + node.elements, node.data.begin() + index);
+            node.elements--;
+            if(withinThresholdNeighbours(getFirstOfChildren(node)))
+                merge(*node.parent);
+            return true;
+        }
+        return false;
+    }
+
+    bool moveElement(QuadNode& node, size_t index, QuadNode& target, size_t targetIndex)
+    {
+        if(index < node.elements && targetIndex < target.elements)
+        {
+            *(target.lastElement()) = std::move(node.data.at(index));
+            target.elements++;
+            std::copy(node.data.begin() + index + 1, node.data.begin() + node.elements, node.data.begin() + index);
+            node.elements--;
+            if(withinThreshold(*node.parent))
+                merge(*node.parent);
+            return true;
+        }
+        return false;
+    }
+
+    std::vector<QuadNode*> getNodesInArea(QuadNode& node, float x, float y, float width, float height) // ?
+    {
+        /* std::vector<QuadNode*> nodes;
+        if(node.x + node.width/2 < x || node.x - node.width/2 > x + width || node.y + node.height/2 < y || node.y - node.height/2 > y + height)
+            return nodes;
+        if(node.children[0] == node.children[1])
+        {
+            nodes.push_back(&node);
+            return nodes;
+        }
+        for(int i = 0; i < 4; i++)
+        {
+            std::vector<QuadNode*> temp = getNodesInArea(*(node.children[i]), x, y, width, height);
+            nodes.insert(nodes.end(), temp.begin(), temp.end());
+        }
+        return nodes; */
+        std::vector<QuadNode*> nodes;
+
+        if(x + width/2 < node.x + node.width/2 && x - width/2 > node.x - node.width/2 && y + height/2 < node.y + node.height/2 && y - height/2 > node.y - node.height/2)
+        {
+            nodes.push_back(&node);
+            return nodes;
+        }
+
+        // rozrysowac i policzyc, mozna lokalizowac narozniki, a glebokosc liczyc arytmetycznie, a nie gonic wskazniki
+        return nodes;
+    }
+
+    std::vector<QuadNode*> getNodesInArea(float x, float y, float width, float height)
+    {
+        return getNodesInArea(nodes.at(0), x, y, width, height);
+    }
+
+    std::vector<T> getElementsInArea(QuadNode& node, float x, float y, float width, float height)
+    {
+        std::vector<T> elements;
+        if(node.x + node.width/2 < x || node.x - node.width/2 > x + width || node.y + node.height/2 < y || node.y - node.height/2 > y + height)
+            return elements;
+        if(node.children[0] == node.children[1])
+        {
+            for(int i = 0; i < node.elements; i++)
+            {
+                if(node.data.at(i).x >= x && node.data.at(i).x <= x + width && node.data.at(i).y >= y && node.data.at(i).y <= y + height)
+                    elements.push_back(node.data.at(i));
+            }
+            return elements;
+        }
+        for(int i = 0; i < 4; i++)
+        {
+            std::vector<T> temp = getElementsInArea(*(node.children[i]), x, y, width, height);
+            elements.insert(elements.end(), temp.begin(), temp.end());
+        }
+        return elements;
+    }
+
+    std::vector<T> getElementsInArea(float x, float y, float width, float height) //getElementsInNode
+    {
+        return getElementsInArea(nodes.at(0), x, y, width, height);
+    }
+
+    std::vector<T> getElementsInArea(QuadNode& node, QuadNode& area)
+    {
+        return getElementsInArea(node, area.x, area.y, area.width, area.height);
+    }
+
+    std::vector<T> getElementsInArea(QuadNode& area)
+    {
+        return getElementsInArea(nodes.at(0), area.x, area.y, area.width, area.height);
+    }
+
     /* bool deleteChildren(QuadNode& node)
     {
         for(auto&& child : node.children)
