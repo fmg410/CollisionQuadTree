@@ -6,6 +6,7 @@
 #include <cmath>
 #include "collision/Figure.hpp"
 #include "collision/DrawableFigure.hpp"
+#include "collision/Collision.hpp"
 
 //#define NO_UI
 
@@ -71,13 +72,13 @@ const int CURRENT_ELEMENTS = 9;
 
 int main() // TODO: update member (first find member...)
 {
-    using Figure = Figure<5>;
+    using Figure = Figure<15>;
     //QuadNode<Figure, 8> node;
     std::array<int, 5> a;
     a.at(0) = 3;
 
     //std::cout << a.size() << " " << a.max_size();
-    QuadTree<Figure, 100000> tree;
+    QuadTree<Figure, 100000> tree(0, 0, 1000.f, 1000.f);
     /* Figure f{12, 3};
     tree.add(f); */
     /* for(int i = 0; i < 8; i++) // breaks starting at 10
@@ -90,7 +91,7 @@ int main() // TODO: update member (first find member...)
     srand(0);
     for(int i = 0; i < CURRENT_ELEMENTS; i++)
     {
-        Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 10) / 10.f - 0.5f, (rand() % 10) / 10.f - 0.5f};
+        Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, 10};
         //if(!tree.contains(f))
             tree.add(f);
         //else
@@ -180,7 +181,7 @@ int main() // TODO: update member (first find member...)
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::N))
                 {
-                    Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 10) / 10.f - 0.5f, (rand() % 10) / 10.f - 0.5f};
+                    Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, 10};
                     tree.add(f);
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
@@ -259,8 +260,25 @@ int main() // TODO: update member (first find member...)
                 for(int i = 0; i < node.elements; i++)
                 {
                     updateSpeed(node.data.at(i));
-                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                     //std::cout << "Node " << num << ": " << node.data.at(i).x << " " << node.data.at(i).y << '\n';
+                }
+                /* for(int i = 0; i < node.elements; i++)
+                    for(int j = i + 1; j < node.elements - 1; j++)
+                            collide(node.data.at(i), node.data.at(j)); */
+                for(int i = 0; i < node.elements; i++)
+                {
+                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                    auto list = tree.getNodesInArea(node, node.data.at(i));
+                    for(auto& otherNodes : list)
+                    {
+                        for(int j = 0; j < otherNodes->elements; j++)
+                            if(node.data.at(i) != otherNodes->data.at(j))
+                                collide(node.data.at(i), otherNodes->data.at(j));
+                    }
+                }
+                for(int i = 0; i < node.elements; i++)
+                {
+                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                     if(tree.correctDataPosition(node, i))
                         i--;
                 }

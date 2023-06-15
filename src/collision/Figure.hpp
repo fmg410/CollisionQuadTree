@@ -82,12 +82,18 @@ struct Figure{
     : Figure(0, 0, 0, 0)
     {}
 
-private:
-    pos calculatedPoints[N];
-    pos model[N];
-    float angle = 0.0f;
     bool operator==(const Figure& f)
     {
         return x == f.x && y == f.y;
     }
+    bool operator!=(const Figure& f)
+    {
+        return !(*this == f);
+    }
+
+private:
+    pos calculatedPoints[N];
+    pos model[N];
+    float angle = 0.0f;
+
 };

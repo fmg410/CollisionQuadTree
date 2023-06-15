@@ -20,10 +20,10 @@ public:
     QuadNode* freeList = nullptr;
     size_t allElements = 0;
 
-    QuadTree()
+    QuadTree(float x = 0, float y = 0, float width = 100.f, float height = 100.f)
     {
         nodes.reserve(MAX_NODES);
-        QuadNode n(0.f, 0.f, 100.f, 100.f, nullNode);
+        QuadNode n(x, y, width, height, nullNode);
         //QuadNode c = std::move(n);
         nodes.push_back(n);
     }
@@ -141,13 +141,20 @@ public:
 
     QuadNode& locateNodeByPosition(QuadNode& node, float x, float y)
     {
+        static int depth = 0;
+        depth++;
+        if(depth > 10)
+            volatile int a = 2;
         if(node.x + node.width/2 < x || node.x - node.width/2 > x || node.y + node.height/2 < y || node.y - node.height/2 > y)
             return locateNodeByPosition(*(node.parent), x, y);
         if(node.children[0] == node.children[1])
             return node;
+        if(&node == &nullNode)
+            return node; // ??
         /* int child = (x < node.x) + (y < node.y) * 3;
         child -= (child / 4) * 2;
         return locateNodeByPosition(*(node.children[child]), x, y); */
+        depth = 0;
         return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y);
     }
 
@@ -569,6 +576,41 @@ public:
 
         // rozrysowac i policzyc, mozna lokalizowac narozniki, a glebokosc liczyc arytmetycznie, a nie gonic wskazniki
         return nodes;
+    }
+
+    std::vector<QuadNode*> getNodesInArea(QuadNode& node, const T& data) // ?
+    {
+        /* std::vector<QuadNode*> nodes;
+        if(node.x + node.width/2 < x || node.x - node.width/2 > x + width || node.y + node.height/2 < y || node.y - node.height/2 > y + height)
+            return nodes;
+        if(node.children[0] == node.children[1])
+        {
+            nodes.push_back(&node);
+            return nodes;
+        }
+        for(int i = 0; i < 4; i++)
+        {
+            std::vector<QuadNode*> temp = getNodesInArea(*(node.children[i]), x, y, width, height);
+            nodes.insert(nodes.end(), temp.begin(), temp.end());
+        }
+        return nodes; */
+        std::vector<QuadNode*> nodesReturn;
+
+        /* if(x + width/2 < node.x + node.width/2 && x - width/2 > node.x - node.width/2 && y + height/2 < node.y + node.height/2 && y - height/2 > node.y - node.height/2)
+        {
+            nodes.push_back(&node);
+            return nodes;
+        } */
+
+        for(int i = 0; i < T::size(); i++)
+        {
+            QuadNode& n = locateNodeByPosition(node, (data.cbegin() + i)->x, (data.cbegin() + i)->y);
+            if(/* &n != &node &&  */std::find(nodesReturn.begin(), nodesReturn.end(), &n) == nodesReturn.end())
+                nodesReturn.push_back(&n);
+        }
+
+        // rozrysowac i policzyc, mozna lokalizowac narozniki, a glebokosc liczyc arytmetycznie, a nie gonic wskazniki
+        return nodesReturn;
     }
 
     std::vector<QuadNode*> getNodesInArea(float x, float y, float width, float height)

@@ -19,7 +19,51 @@ void updateSpeed(T& object)
 template <typename T>
 void applyBoundaries(T& object, float xMin, float xMax, float yMin, float yMax)
 {
-    if(object.x < xMin)
+    bool updatedVelX = false;
+    bool updatedVelY = false;
+
+    for(auto& vertex : object)
+    {
+        object.update();
+        if(vertex.x < xMin)
+        {
+            object.x += xMin - vertex.x;
+            if(!updatedVelX)
+            {
+                object.velX *= -1;
+                updatedVelX = true;
+            }
+        }
+        else if(vertex.x > xMax)
+        {
+            object.x -= vertex.x - xMax;
+            if(!updatedVelX)
+            {
+                object.velX *= -1;
+                updatedVelX = true;
+            }
+        }
+        if(vertex.y < yMin)
+        {
+            object.y += yMin - vertex.y;;
+            if(!updatedVelY)
+            {
+                object.velY *= -1;
+                updatedVelY = true;
+            }
+        }
+        else if(vertex.y > yMax)
+        {
+            object.y -= vertex.y - yMax;
+            if(!updatedVelY)
+            {
+                object.velY *= -1;
+                updatedVelY = true;
+            }
+        }
+    }
+    object.update();
+    /* if(object.x < xMin)
     {
         object.x = xMin;
         object.velX *= -1;
@@ -38,7 +82,7 @@ void applyBoundaries(T& object, float xMin, float xMax, float yMin, float yMax)
     {
         object.y = yMax;
         object.velY *= -1;
-    }
+    } */
 }
 
 template <typename T>
