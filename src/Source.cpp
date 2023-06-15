@@ -4,6 +4,8 @@
 #include "structures/QuadTree.hpp"
 #include "physics/functions.hpp"
 #include <cmath>
+#include "collision/Figure.hpp"
+#include "collision/DrawableFigure.hpp"
 
 //#define NO_UI
 
@@ -64,40 +66,31 @@ void zoomViewAt(sf::Vector2i pixel, sf::RenderWindow& window, float zoom, sf::Vi
 	}
 }
 #endif
-struct figure{
-    float x = 0;
-    float y = 0;
-    float velX = 0.1f;
-    float velY = 0.1f;
-    bool operator==(const figure& f)
-    {
-        return x == f.x && y == f.y;
-    }
-};
 
-const int CURRENT_ELEMENTS = 2200;
+const int CURRENT_ELEMENTS = 9;
 
 int main() // TODO: update member (first find member...)
 {
-    //QuadNode<figure, 8> node;
+    using Figure = Figure<5>;
+    //QuadNode<Figure, 8> node;
     std::array<int, 5> a;
     a.at(0) = 3;
 
     //std::cout << a.size() << " " << a.max_size();
-    QuadTree<figure, 100000> tree;
-    /* figure f{12, 3};
+    QuadTree<Figure, 100000> tree;
+    /* Figure f{12, 3};
     tree.add(f); */
     /* for(int i = 0; i < 8; i++) // breaks starting at 10
     {
-        tree.add(figure{float(i), float(i+5)});
+        tree.add(Figure{float(i), float(i+5)});
     }
-    tree.add(figure{float(8), float(8+5)});
-    tree.add(figure{float(-8), float(-8+5)}); */
+    tree.add(Figure{float(8), float(8+5)});
+    tree.add(Figure{float(-8), float(-8+5)}); */
     //srand(time(NULL));
     srand(0);
     for(int i = 0; i < CURRENT_ELEMENTS; i++)
     {
-        figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
+        Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 10) / 10.f - 0.5f, (rand() % 10) / 10.f - 0.5f};
         //if(!tree.contains(f))
             tree.add(f);
         //else
@@ -109,17 +102,17 @@ int main() // TODO: update member (first find member...)
         std::cout << "MAX: " << j << std::endl;
         for(int i = 0; i < j; i++)
         {
-            figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
+            Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
             //if(!tree.contains(f))
                 tree.add(f);
             //else
             //    i--;
         }
-        tree = QuadTree<figure, 100000>();
+        tree = QuadTree<Figure, 100000>();
     } */
     //auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
     /* for(int i = 0; i < CURRENT_ELEMENTS; i++)
-        tree.add(figure{float(-80.f + i), float(-80.f + i), 0.1f, 0.2f}); */
+        tree.add(Figure{float(-80.f + i), float(-80.f + i), 0.1f, 0.2f}); */
     //std::cout << node.toString();
 
     /* int tab[5] = {1, 2, 3, 4, 5};
@@ -146,7 +139,7 @@ int main() // TODO: update member (first find member...)
 
     sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
     //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
-    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(200.f, 200.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(100.f, 100.f));
     window.setView(view);
 
     sf::Clock clock;
@@ -156,7 +149,6 @@ int main() // TODO: update member (first find member...)
     {
         return 1;
     }
-    window.setFramerateLimit(60);
 
     // run the program as long as the window is open
     while (window.isOpen())
@@ -188,12 +180,8 @@ int main() // TODO: update member (first find member...)
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::N))
                 {
-                    for(int z = 0; z < 100; z++)
-                    {
-                    figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
+                    Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 10) / 10.f - 0.5f, (rand() % 10) / 10.f - 0.5f};
                     tree.add(f);
-
-                    }
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::W))
                 {
@@ -201,7 +189,6 @@ int main() // TODO: update member (first find member...)
                     while((*c).elements == 0)
                         c.operator++();
                     (*c).data.at(0).y -= 1.f;
-
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
                 {
@@ -235,12 +222,22 @@ int main() // TODO: update member (first find member...)
                 {
                     pause = !pause;
                 }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::C))
+                {
+                    auto c = tree.begin();
+                    while((*c).elements == 0)
+                        c.operator++();
+                    std::cout << "Node: " << (*c).data.at(0).x << " " << (*c).data.at(0).y << '\n';
+                }
             }
 
             if (event.type == sf::Event::Resized)
 				resizeView(window, view);
 
         }
+        // fps control
+        if(clock.getElapsedTime().asMilliseconds() < 16)
+            continue;
 
         // clear the window with black color
         window.setView(view);
@@ -278,19 +275,25 @@ int main() // TODO: update member (first find member...)
         for(auto& node : tree)
         {
             sf::RectangleShape background;
-            background.setSize(sf::Vector2f(node.width * 2, node.height * 2));
+            background.setSize(sf::Vector2f(node.width, node.height));
             //background.setOrigin(sf::Vector2f(node.width, node.height));
-            background.setPosition(node.x * 2 - node.width, node.y * 2 - node.height);
+            background.setPosition(node.x - node.width / 2, node.y - node.height / 2);
             background.setFillColor(sf::Color(color.r, color.g, color.b));
             color.operator++();
             window.draw(background);
+        }
+        for(auto& node : tree)
+        {
             for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
             {
-                sf::RectangleShape rect(sf::Vector2f(1.f, 1.f));
+                /* sf::RectangleShape rect(sf::Vector2f(1.f, 1.f));
                 rect.setPosition(sf::Vector2f(itr->x * 2, itr->y * 2));
                 rect.setFillColor(sf::Color::Red);
                 //rect.setOrigin(sf::Vector2f(0.5f, 0.5f));
-                window.draw(rect);
+                window.draw(rect); */
+                itr->update();
+                DrawableFigure drawableFigure(*itr);
+                window.draw(drawableFigure);
                 //if(abs(itr->x) > 19 || abs(itr->y) > 19)
                     //std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
             }
