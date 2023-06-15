@@ -4,6 +4,7 @@
 #include "structures/QuadTree.hpp"
 #include "physics/functions.hpp"
 #include <cmath>
+#include <chrono>
 #include "collision/Figure.hpp"
 #include "collision/DrawableFigure.hpp"
 #include "collision/Collision.hpp"
@@ -15,12 +16,20 @@
 #include <SFML/Graphics.hpp>
 #endif
 
+const bool SIMULATE_TREE = true;
+const bool START_PAUSED = true;
+constexpr unsigned int VERTICES_COUNT = 4;
+const int CURRENT_ELEMENTS = 1000;
+const unsigned int MAX_ITERATIONS = 100000;
+
+
+
 struct RainbowGenerator{
     unsigned char r = 0;
     unsigned char g = 0;
     unsigned char b = 0;
     unsigned int cnt = 0;
-    const float freq = .01f;
+    const float freq = .02f;
     RainbowGenerator()
     {
         this->operator++();
@@ -68,11 +77,9 @@ void zoomViewAt(sf::Vector2i pixel, sf::RenderWindow& window, float zoom, sf::Vi
 }
 #endif
 
-const int CURRENT_ELEMENTS = 9;
-
-int main() // TODO: update member (first find member...)
+void testTree() // TODO: update member (first find member...)
 {
-    using Figure = Figure<15>;
+    using Figure = Figure<VERTICES_COUNT>;
     //QuadNode<Figure, 8> node;
     std::array<int, 5> a;
     a.at(0) = 3;
@@ -91,7 +98,8 @@ int main() // TODO: update member (first find member...)
     srand(0);
     for(int i = 0; i < CURRENT_ELEMENTS; i++)
     {
-        Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, 10};
+        Figure f{float(rand() % 1000 - 500), float(rand() % 1000) - 500, (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, 10};
+        f.increaseAngle(rand() % 360);
         //if(!tree.contains(f))
             tree.add(f);
         //else
@@ -121,26 +129,24 @@ int main() // TODO: update member (first find member...)
     int* dwa = tab + 3;
     std::cout << "   " << dwa - jed; */
 
-    int count = 0;
-    int num = 0;
-    for(auto& node : tree)
-    {
-        for(auto itr = node.data.begin(); itr != node.data.begin() + node.elements; itr++)
-        {
-            //std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
-            count++;
-        }
-        num++;
-        //std::cout << node.data.at(0).x << " " << node.data.at(0).y << '\n';
-    }
-
     #ifndef NO_UI
 
-    bool pause = false;
+    bool pause = START_PAUSED;
+    unsigned int iterations = 0;
+
+
+    using Clock = std::chrono::steady_clock;
+    using std::chrono::time_point;
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+    using std::chrono::microseconds;
+    using std::chrono::nanoseconds;
+    using namespace std::literals::chrono_literals;
+    std::vector<int64_t> timings;
 
     sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
     //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
-    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(100.f, 100.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(1000.f, 1000.f));
     window.setView(view);
 
     sf::Clock clock;
@@ -148,7 +154,7 @@ int main() // TODO: update member (first find member...)
     sf::Font font;
     if (!font.loadFromFile("Arialn.ttf"))
     {
-        return 1;
+        return;
     }
 
     // run the program as long as the window is open
@@ -236,7 +242,7 @@ int main() // TODO: update member (first find member...)
 				resizeView(window, view);
 
         }
-        // fps control
+        // fps control !!!!!!!!!!!!!!!!!!
         if(clock.getElapsedTime().asMilliseconds() < 16)
             continue;
 
@@ -252,40 +258,59 @@ int main() // TODO: update member (first find member...)
         center.setOrigin(sf::Vector2f(0.5f, 0.5f));
         window.draw(center); */
 
-        num = 0;
+        int num = 0;
         if(!pause)
         {
-            for(auto& node : tree)
+            time_point<Clock> start = Clock::now();
+            for(int m = 0; m < 1; m++)
             {
-                for(int i = 0; i < node.elements; i++)
+                for(auto& node : tree)
                 {
-                    updateSpeed(node.data.at(i));
-                    //std::cout << "Node " << num << ": " << node.data.at(i).x << " " << node.data.at(i).y << '\n';
-                }
-                /* for(int i = 0; i < node.elements; i++)
-                    for(int j = i + 1; j < node.elements - 1; j++)
-                            collide(node.data.at(i), node.data.at(j)); */
-                for(int i = 0; i < node.elements; i++)
-                {
-                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
-                    auto list = tree.getNodesInArea(node, node.data.at(i));
-                    for(auto& otherNodes : list)
+                    for(int i = 0; i < node.elements; i++)
                     {
-                        for(int j = 0; j < otherNodes->elements; j++)
-                            if(node.data.at(i) != otherNodes->data.at(j))
-                                collide(node.data.at(i), otherNodes->data.at(j));
+                        updateSpeed(node.data.at(i), 1.f);
+                        applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                        //std::cout << "Node " << num << ": " << node.data.at(i).x << " " << node.data.at(i).y << '\n';
                     }
+                    /* for(int i = 0; i < node.elements; i++)
+                        for(int j = i + 1; j < node.elements - 1; j++)
+                                collide(node.data.at(i), node.data.at(j)); */
+                    for(int i = 0; i < node.elements; i++)
+                    {
+                        auto list = tree.getNodesInArea(node, node.data.at(i));
+                        for(auto& otherNodes : list)
+                        {
+                            for(int j = 0; j < otherNodes->elements; j++)
+                                if(node.data.at(i) != otherNodes->data.at(j))
+                                {
+                                    collideAdv(node.data.at(i), otherNodes->data.at(j), 1.f);
+                                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                                    applyBoundariesNode(node.data.at(j), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                                }
+                        }
+                    }
+                    for(int i = 0; i < node.elements; i++)
+                    {
+                        if(tree.correctDataPosition(node, i))
+                            i--;
+                    }
+                    num++;
                 }
-                for(int i = 0; i < node.elements; i++)
-                {
-                    applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
-                    if(tree.correctDataPosition(node, i))
-                        i--;
-                }
-                num++;
             }
             tree.mergeTree();
+            time_point<Clock> end = Clock::now();
+            milliseconds diff = duration_cast<milliseconds>(end - start);
+            timings.push_back(diff.count());
+            if(iterations >= MAX_ITERATIONS)
+            {
+                int64_t average = 0;
+                std::for_each(timings.begin(), timings.end(), [&](auto& t){ average += t; });
+                std::cout << "CollisionQuadTree : Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements is : " << average * 1.f / timings.size() << " microseconds" << std::endl;
+                break;
+            }
+            iterations++;
         }
+
 
         unsigned int which = 0;
         num = 0;
@@ -327,7 +352,7 @@ int main() // TODO: update member (first find member...)
         text.setString(std::to_string(fps));
         text.setCharacterSize(12);
         text.setFillColor(sf::Color::White);
-        text.setPosition(sf::Vector2f(110.f, 110.f));
+        text.setPosition(sf::Vector2f(650.f, 650.f));
         window.draw(text);}
 
         {sf::Text text;
@@ -335,7 +360,7 @@ int main() // TODO: update member (first find member...)
         text.setString(std::to_string(tree.nodes.size()));
         text.setCharacterSize(12);
         text.setFillColor(sf::Color::White);
-        text.setPosition(sf::Vector2f(-130.f, -130.f));
+        text.setPosition(sf::Vector2f(-650.f, -650.f));
         window.draw(text);}
 
         // end the current frame
@@ -343,4 +368,229 @@ int main() // TODO: update member (first find member...)
     }
     #endif
 
+}
+
+
+void testVector() // TODO: update member (first find member...)
+{
+    using Figure = Figure<VERTICES_COUNT>;
+    //QuadNode<Figure, 8> node;
+    std::array<int, 5> a;
+    a.at(0) = 3;
+
+    //std::cout << a.size() << " " << a.max_size();
+    QuadTree<Figure, 100000> tree(0, 0, 1000.f, 1000.f);
+    std::vector<Figure> vec;
+    /* Figure f{12, 3};
+    tree.add(f); */
+    /* for(int i = 0; i < 8; i++) // breaks starting at 10
+    {
+        tree.add(Figure{float(i), float(i+5)});
+    }
+    tree.add(Figure{float(8), float(8+5)});
+    tree.add(Figure{float(-8), float(-8+5)}); */
+    //srand(time(NULL));
+    srand(0);
+    for(int i = 0; i < CURRENT_ELEMENTS; i++)
+    {
+        Figure f{float(rand() % 1000 - 500), float(rand() % 1000) - 500, (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, 10};
+        //if(!tree.contains(f))
+            vec.push_back(f);
+        //else
+        //    i--;
+    }
+
+    /* for(int j = 1000; j < CURRENT_ELEMENTS; j += 100)
+    {
+        std::cout << "MAX: " << j << std::endl;
+        for(int i = 0; i < j; i++)
+        {
+            Figure f{float(rand() % 35 - 19), float(rand() % 35) - 19, (rand() % 21) / 10.f - 1.f, (rand() % 21) / 10.f - 1.f};
+            //if(!tree.contains(f))
+                tree.add(f);
+            //else
+            //    i--;
+        }
+        tree = QuadTree<Figure, 100000>();
+    } */
+    //auto sss = tree.locateNodeByPosition(tree.nodes.at(0), 10, 5);
+    /* for(int i = 0; i < CURRENT_ELEMENTS; i++)
+        tree.add(Figure{float(-80.f + i), float(-80.f + i), 0.1f, 0.2f}); */
+    //std::cout << node.toString();
+
+    /* int tab[5] = {1, 2, 3, 4, 5};
+    int* jed = tab;
+    int* dwa = tab + 3;
+    std::cout << "   " << dwa - jed; */
+
+    #ifndef NO_UI
+
+    bool pause = START_PAUSED;
+    unsigned int iterations = 0;
+
+
+    using Clock = std::chrono::steady_clock;
+    using std::chrono::time_point;
+    using std::chrono::duration_cast;
+    using std::chrono::milliseconds;
+    using std::chrono::microseconds;
+    using std::chrono::nanoseconds;
+    using namespace std::literals::chrono_literals;
+    std::vector<int64_t> timings;
+
+    sf::RenderWindow window(sf::VideoMode(600, 600), "My window");
+    //sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(40.f, 40.f));
+    sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(1000.f, 1000.f));
+    window.setView(view);
+
+    sf::Clock clock;
+    float lastTime = 0;
+    sf::Font font;
+    if (!font.loadFromFile("Arialn.ttf"))
+    {
+        return;
+    }
+
+    // run the program as long as the window is open
+    while (window.isOpen())
+    {
+        // check all the window's events that were triggered since the last iteration of the loop
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            // "close requested" event: we close the window
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            if (event.type == sf::Event::MouseWheelScrolled)
+			{
+				zoomViewAt({ event.mouseWheelScroll.x, event.mouseWheelScroll.y }, window, 1.1f, view, event.mouseWheelScroll.delta);
+			}
+
+            if (event.type == sf::Event::KeyPressed)
+            {
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
+                {
+                    sf::Texture texture;
+                    texture.create(window.getSize().x, window.getSize().y);
+                    texture.update(window);
+                    if (texture.copyToImage().saveToFile("ss.jpg"))
+                    {
+                        std::cout << "screenshot saved to ss.jpg" << std::endl;
+                    }
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+                {
+                    pause = !pause;
+                }
+            }
+
+            if (event.type == sf::Event::Resized)
+				resizeView(window, view);
+
+        }
+        // fps control !!!!!!!!!!!!!!!!!!
+        if(clock.getElapsedTime().asMilliseconds() < 16)
+            continue;
+
+        // clear the window with black color
+        window.setView(view);
+        window.clear(sf::Color::Black);
+
+        // draw everything here...
+        // window.draw(...);
+        /* sf::RectangleShape center(sf::Vector2f(1.f, 1.f));
+        center.setFillColor(sf::Color::Green);
+        center.setPosition(sf::Vector2f(0.f, 0.f));
+        center.setOrigin(sf::Vector2f(0.5f, 0.5f));
+        window.draw(center); */
+
+        int num = 0;
+        if(!pause)
+        {
+            time_point<Clock> start = Clock::now();
+            for(int m = 0; m < 1; m++)
+            {
+                for(int i = 0; i < vec.size(); i++)
+                {
+                    updateSpeed(vec.at(i), 1.f);
+                    applyBoundariesNode(vec.at(i), 0.f, 0.f, 1000.f, 1000.f);
+                    for(int j = i + 1; j < vec.size(); j++)
+                    {
+                        collideAdv(vec.at(i), vec.at(j), 1.f);
+                        applyBoundariesNode(vec.at(i), 0.f, 0.f, 1000.f, 1000.f);
+                        applyBoundariesNode(vec.at(j), 0.f, 0.f, 1000.f, 1000.f);
+                    }
+                }
+            }
+            time_point<Clock> end = Clock::now();
+            milliseconds diff = duration_cast<milliseconds>(end - start);
+            timings.push_back(diff.count());
+            if(iterations >= MAX_ITERATIONS)
+            {
+                int64_t average = 0;
+                std::for_each(timings.begin(), timings.end(), [&](auto& t){ average += t; });
+                std::cout << "std::vector: Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements is : " << average * 1.f / timings.size() << " microseconds" << std::endl;
+                break;
+            }
+            iterations++;
+        }
+
+
+        unsigned int which = 0;
+        num = 0;
+        RainbowGenerator color;
+        for(auto& node : tree)
+        {
+            for(auto& itr : vec)
+            {
+                /* sf::RectangleShape rect(sf::Vector2f(1.f, 1.f));
+                rect.setPosition(sf::Vector2f(itr->x * 2, itr->y * 2));
+                rect.setFillColor(sf::Color::Red);
+                //rect.setOrigin(sf::Vector2f(0.5f, 0.5f));
+                window.draw(rect); */
+                itr.update();
+                DrawableFigure drawableFigure(itr);
+                window.draw(drawableFigure);
+                //if(abs(itr->x) > 19 || abs(itr->y) > 19)
+                    //std::cout << "Node " << num << ": " << itr->x << " " << itr->y << '\n';
+            }
+            num++;
+        }
+
+        float currentTime = clock.restart().asSeconds();
+        float fps = 1.f / (currentTime - lastTime);
+        lastTime = currentTime;
+
+        {sf::Text text;
+        text.setFont(font);
+        text.setString(std::to_string(fps));
+        text.setCharacterSize(12);
+        text.setFillColor(sf::Color::White);
+        text.setPosition(sf::Vector2f(650.f, 650.f));
+        window.draw(text);}
+
+        {sf::Text text;
+        text.setFont(font);
+        text.setString(std::to_string(tree.nodes.size()));
+        text.setCharacterSize(12);
+        text.setFillColor(sf::Color::White);
+        text.setPosition(sf::Vector2f(-650.f, -650.f));
+        window.draw(text);}
+
+        // end the current frame
+        window.display();
+    }
+    #endif
+
+}
+
+int main()
+{
+    if(SIMULATE_TREE)
+        testTree();
+    else
+        testVector();
+        /* testTree();
+        testVector(); */
 }

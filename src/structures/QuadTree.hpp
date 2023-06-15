@@ -139,14 +139,16 @@ public:
         add(elem, nodes.at(0));
     }
 
-    QuadNode& locateNodeByPosition(QuadNode& node, float x, float y)
+    QuadNode& locateNodeByPosition(QuadNode& node, float x, float y, int depth)
     {
-        static int depth = 0;
-        depth++;
-        if(depth > 10)
+        if(depth > 7)
             volatile int a = 2;
+        if(depth > 1000)
+            return nullNode;
+        if(x > getRootX() + getRootWidth()/2 || x < getRootX() - getRootWidth()/2 || y > getRootY() + getRootHeight()/2 || y < getRootY() - getRootHeight()/2)
+            return nodes.at(0);
         if(node.x + node.width/2 < x || node.x - node.width/2 > x || node.y + node.height/2 < y || node.y - node.height/2 > y)
-            return locateNodeByPosition(*(node.parent), x, y);
+            return locateNodeByPosition(*(node.parent), x, y, depth + 1);
         if(node.children[0] == node.children[1])
             return node;
         if(&node == &nullNode)
@@ -154,8 +156,7 @@ public:
         /* int child = (x < node.x) + (y < node.y) * 3;
         child -= (child / 4) * 2;
         return locateNodeByPosition(*(node.children[child]), x, y); */
-        depth = 0;
-        return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y);
+        return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y, depth + 1);
     }
 
     bool contains(QuadNode& node, const T& val)
@@ -191,7 +192,7 @@ public:
     {
         if(allElements >= MAX_NODES)
             return;
-        QuadNode& n = locateNodeByPosition(nodes.at(0), data.x, data.y);
+        QuadNode& n = locateNodeByPosition(nodes.at(0), data.x, data.y, 0);
         if(n.elements < threshhold)
         {
             *(n.lastElement()) = data;
@@ -604,7 +605,7 @@ public:
 
         for(int i = 0; i < T::size(); i++)
         {
-            QuadNode& n = locateNodeByPosition(node, (data.cbegin() + i)->x, (data.cbegin() + i)->y);
+            QuadNode& n = locateNodeByPosition(node, (data.cbegin() + i)->x, (data.cbegin() + i)->y, 0);
             if(/* &n != &node &&  */std::find(nodesReturn.begin(), nodesReturn.end(), &n) == nodesReturn.end())
                 nodesReturn.push_back(&n);
         }

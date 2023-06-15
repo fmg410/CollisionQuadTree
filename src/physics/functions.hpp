@@ -1,26 +1,26 @@
 #pragma once
-
+#include <cmath>
 
 
 
 template <typename T>
-void applyGravity(T& object, float g = 10.f)
+void applyGravity(T& object, float g = 0.001f, float modifier = 1.f)
 {
-    object.velocity.y += g;
+    object.velY += g * modifier;
 }
 
 template <typename T>
-void updateSpeed(T& object)
+void updateSpeed(T& object, float modifier = 1.f)
 {
-    object.x += object.velX;
-    object.y += object.velY;
+    //applyGravity(object, modifier);
+    object.x += object.velX * modifier;
+    object.y += object.velY * modifier;
+    object.increaseAngle(0.1f);
 }
 
 template <typename T>
 void applyBoundaries(T& object, float xMin, float xMax, float yMin, float yMax)
 {
-    bool updatedVelX = false;
-    bool updatedVelY = false;
 
     for(auto& vertex : object)
     {
@@ -28,38 +28,22 @@ void applyBoundaries(T& object, float xMin, float xMax, float yMin, float yMax)
         if(vertex.x < xMin)
         {
             object.x += xMin - vertex.x;
-            if(!updatedVelX)
-            {
-                object.velX *= -1;
-                updatedVelX = true;
-            }
+            object.velX = fabs(object.velX);
         }
         else if(vertex.x > xMax)
         {
             object.x -= vertex.x - xMax;
-            if(!updatedVelX)
-            {
-                object.velX *= -1;
-                updatedVelX = true;
-            }
+            object.velX = fabs(object.velX) * -1;
         }
         if(vertex.y < yMin)
         {
-            object.y += yMin - vertex.y;;
-            if(!updatedVelY)
-            {
-                object.velY *= -1;
-                updatedVelY = true;
-            }
+            object.y += yMin - vertex.y;
+            object.velY = fabs(object.velY);
         }
         else if(vertex.y > yMax)
         {
             object.y -= vertex.y - yMax;
-            if(!updatedVelY)
-            {
-                object.velY *= -1;
-                updatedVelY = true;
-            }
+            object.velY = 0;
         }
     }
     object.update();

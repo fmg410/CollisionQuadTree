@@ -49,6 +49,11 @@ struct Figure{
         return N;
     }
 
+    size_t getSize() const
+    {
+        return N;
+    }
+
     auto begin()
     {
         return calculatedPoints;

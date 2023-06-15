@@ -19,11 +19,13 @@ struct DrawableFigure : sf::Drawable, sf::Transformable
     {
         m_vertices[0].position = sf::Vector2f(figure.x, figure.y);
         m_vertices[0].color = color;
-        for(int i = 0; i < T::size() + 1; i++)
+        for(int i = 0; i < T::size(); i++)
         {
             m_vertices[i].position = sf::Vector2f((figure.cbegin() + i)->x, (figure.cbegin() + i)->y);
-            m_vertices[i + 1].color = color;
+            m_vertices[i].color = color;
         }
+        /* m_vertices[T::size() + 1].position = sf::Vector2f((figure.cbegin())->x, (figure.cbegin())->y);
+        m_vertices[T::size() + 1].color = color; */
     }
 
 private:
@@ -37,6 +39,6 @@ private:
         target.draw(m_vertices, T::size(), sf::TriangleFan, states);
     }
 
-    sf::Vertex m_vertices[T::size() + 1];
+    sf::Vertex m_vertices[T::size()];
     sf::Texture m_texture;
 };
