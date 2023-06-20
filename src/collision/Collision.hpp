@@ -61,12 +61,13 @@ bool collide(T& figure1, T& figure2, float modifier = 1.f)
 		figure1.velY *= -1;
 		figure2.velX *= -1;
 		figure2.velY *= -1;
-		return false;
+		return true;
 	}
 
 template <typename T>
 bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 {
+	bool collided = false;
 	T *poly1 = &figure1;
 	T *poly2 = &figure2;
 
@@ -101,6 +102,7 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 				{
 					displacement.x += (1.0f - t1) * (line_r1e.x - line_r1s.x);
 					displacement.y += (1.0f - t1) * (line_r1e.y - line_r1s.y);
+					collided = true;
 				}
 			}
 
@@ -110,5 +112,5 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 	}
 
 	// Cant overlap if static collision is resolved
-	return false;
+	return collided;
 }

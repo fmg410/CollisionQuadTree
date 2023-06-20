@@ -8,6 +8,7 @@
 #include "collision/Figure.hpp"
 #include "collision/DrawableFigure.hpp"
 #include "collision/Collision.hpp"
+#include "utils/RainbowGenerator.hpp"
 
 //#define NO_UI
 
@@ -16,36 +17,12 @@
 #include <SFML/Graphics.hpp>
 #endif
 
+const bool SIMULATE_BOTH = true;
 const bool SIMULATE_TREE = true;
-const bool START_PAUSED = true;
+const bool START_PAUSED = false;
 constexpr unsigned int VERTICES_COUNT = 4;
 const int CURRENT_ELEMENTS = 1000;
-const unsigned int MAX_ITERATIONS = 100000;
-
-
-
-struct RainbowGenerator{
-    unsigned char r = 0;
-    unsigned char g = 0;
-    unsigned char b = 0;
-    unsigned int cnt = 0;
-    const float freq = .02f;
-    RainbowGenerator()
-    {
-        this->operator++();
-    }
-    RainbowGenerator& operator++()
-    {
-        b = std::sin(freq * cnt + 0) * 127 + 128;
-        g = std::sin(freq * cnt + 2) * 127 + 128;
-        r = std::sin(freq * cnt + 4) * 127 + 128;
-        if (cnt++ >= -1U)
-        {
-                cnt = 0;
-        }
-        return *this;
-    }
-};
+const unsigned int MAX_ITERATIONS = 1000;
 
 static const float VIEW_HEIGHT = 600.f;
 
@@ -149,6 +126,8 @@ void testTree() // TODO: update member (first find member...)
     sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(1000.f, 1000.f));
     window.setView(view);
 
+
+    uint64_t collisionCount = 0;
     sf::Clock clock;
     float lastTime = 0;
     sf::Font font;
@@ -283,7 +262,8 @@ void testTree() // TODO: update member (first find member...)
                             for(int j = 0; j < otherNodes->elements; j++)
                                 if(node.data.at(i) != otherNodes->data.at(j))
                                 {
-                                    collideAdv(node.data.at(i), otherNodes->data.at(j), 1.f);
+                                    if(collideAdv(node.data.at(i), otherNodes->data.at(j), 1.f))
+                                        collisionCount++;
                                     applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                                     applyBoundariesNode(node.data.at(j), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                                 }
@@ -299,16 +279,18 @@ void testTree() // TODO: update member (first find member...)
             }
             tree.mergeTree();
             time_point<Clock> end = Clock::now();
-            milliseconds diff = duration_cast<milliseconds>(end - start);
+            nanoseconds diff = duration_cast<nanoseconds>(end - start);
             timings.push_back(diff.count());
             if(iterations >= MAX_ITERATIONS)
             {
                 int64_t average = 0;
                 std::for_each(timings.begin(), timings.end(), [&](auto& t){ average += t; });
-                std::cout << "CollisionQuadTree : Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements is : " << average * 1.f / timings.size() << " microseconds" << std::endl;
+                std::cout << "Collision count : " << collisionCount << std::endl;
+                std::cout << "CollisionQuadTree : Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements with " << Figure::size() << " vertices is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl;
                 break;
             }
-            iterations++;
+            if(MAX_ITERATIONS != -1)
+                iterations++;
         }
 
 
@@ -443,6 +425,7 @@ void testVector() // TODO: update member (first find member...)
     sf::View view(sf::Vector2f(0.f, 0.f), sf::Vector2f(1000.f, 1000.f));
     window.setView(view);
 
+    uint64_t collisionCount = 0;
     sf::Clock clock;
     float lastTime = 0;
     sf::Font font;
@@ -517,23 +500,26 @@ void testVector() // TODO: update member (first find member...)
                     applyBoundariesNode(vec.at(i), 0.f, 0.f, 1000.f, 1000.f);
                     for(int j = i + 1; j < vec.size(); j++)
                     {
-                        collideAdv(vec.at(i), vec.at(j), 1.f);
+                        if(collideAdv(vec.at(i), vec.at(j), 1.f))
+                            collisionCount++;
                         applyBoundariesNode(vec.at(i), 0.f, 0.f, 1000.f, 1000.f);
                         applyBoundariesNode(vec.at(j), 0.f, 0.f, 1000.f, 1000.f);
                     }
                 }
             }
             time_point<Clock> end = Clock::now();
-            milliseconds diff = duration_cast<milliseconds>(end - start);
+            nanoseconds diff = duration_cast<nanoseconds>(end - start);
             timings.push_back(diff.count());
             if(iterations >= MAX_ITERATIONS)
             {
                 int64_t average = 0;
                 std::for_each(timings.begin(), timings.end(), [&](auto& t){ average += t; });
-                std::cout << "std::vector: Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements is : " << average * 1.f / timings.size() << " microseconds" << std::endl;
+                std::cout << "Collision count : " << collisionCount << std::endl;
+                std::cout << "std::vector: Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements with " << Figure::size() << " vertices is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl;
                 break;
             }
-            iterations++;
+            if(MAX_ITERATIONS != -1)
+                iterations++;
         }
 
 
@@ -587,10 +573,17 @@ void testVector() // TODO: update member (first find member...)
 
 int main()
 {
-    if(SIMULATE_TREE)
+    if(SIMULATE_BOTH)
+    {
         testTree();
-    else
         testVector();
-        /* testTree();
-        testVector(); */
+    }
+    else
+    {
+        if(SIMULATE_TREE)
+            testTree();
+        else
+            testVector();
+    }
+
 }
