@@ -15,7 +15,9 @@ void updateSpeed(T& object, float modifier = 1.f)
     //applyGravity(object, modifier);
     object.x += object.velX * modifier;
     object.y += object.velY * modifier;
-    object.increaseAngle(0.1f);
+    #ifdef ROTATE_FIGURES
+    object.increaseAngle((rand() % 11 / 50.f) * modifier);
+    #endif
 }
 
 template <typename T>
@@ -43,7 +45,8 @@ void applyBoundaries(T& object, float xMin, float xMax, float yMin, float yMax)
         else if(vertex.y > yMax)
         {
             object.y -= vertex.y - yMax;
-            object.velY = 0;
+            object.velY = fabs(object.velY) * -1;
+            /* object.velY = 0; // przy grawitacji */
         }
     }
     object.update();

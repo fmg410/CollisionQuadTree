@@ -13,18 +13,26 @@
     }
 }; */
 
+unsigned long getNextId()
+{
+    static unsigned long currentId = 1;
+    return currentId++;
+}
+
 template <unsigned int N>
 struct Figure{
     float x = 0;
     float y = 0;
     float velX = 0.1f;
     float velY = 0.1f;
+    bool collisionChecked = false;
 
     Figure(float _x, float _y, float _velX, float _velY, float scale = 2.f)
     : x(_x)
     , y(_y)
     , velX(_velX)
     , velY(_velY)
+    , id(getNextId())
     {
         float fTheta = 3.14159f * 2.0f / N;
         for (int i = 0; i < N; i++)
@@ -32,6 +40,11 @@ struct Figure{
 			model[i] = { scale * std::cos(fTheta * i), scale * std::sin(fTheta * i) };
 			calculatedPoints[i] = { scale * std::cos(fTheta * i), scale * std::sin(fTheta * i) };
 		}
+    }
+
+    unsigned long getId() const
+    {
+        return id;
     }
 
     void update()
@@ -100,5 +113,6 @@ private:
     pos calculatedPoints[N];
     pos model[N];
     float angle = 0.0f;
+    unsigned long id = 0;
 
 };

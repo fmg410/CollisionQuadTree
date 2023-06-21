@@ -112,5 +112,14 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 	}
 
 	// Cant overlap if static collision is resolved
+	if(collided)
+	{
+		std::swap(figure1.velX, figure1.velY);
+		std::swap(figure1.velX, figure2.velY);
+		figure1.velX *= -1;
+		figure1.velY *= -1;
+		figure2.velX *= -1;
+		figure2.velY *= -1;
+	}
 	return collided;
 }

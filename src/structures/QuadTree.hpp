@@ -1,31 +1,45 @@
 #pragma once
 #include "QuadNode.hpp"
+#include "../collision/pos.hpp"
 
 #include <vector>
 #include <algorithm>
 #include <iterator> // For std::forward_iterator_tag
 #include <cstddef>  // For std::ptrdiff_t
 #include <functional>
+#include <cmath>
 
+/* template <typename T>
+bool within(T firstBound, T secoundBound, T value)
+{
+    if(firstBound < secoundBound)
+        return value > firstBound && value < secoundBound;
+    return value < firstBound && value > secoundBound;
+} */
 
-template <typename T, int MAX_NODES>
+bool within(float firstBound, float secoundBound, float value)
+{
+    if(firstBound < secoundBound)
+        return value > firstBound && value < secoundBound;
+    return value < firstBound && value > secoundBound;
+}
+
+template <typename T, unsigned int threshhold = 8>
 class QuadTree{
 
 public:
-
-    static const int threshhold = 8;
     using QuadNode = QuadNode<T, threshhold>;
     std::vector<QuadNode> nodes;
     QuadNode nullNode;
     QuadNode* freeList = nullptr;
     size_t allElements = 0;
 
-    QuadTree(float x = 0, float y = 0, float width = 100.f, float height = 100.f)
+    QuadTree(unsigned int maxNodes = 10000, float x = 0, float y = 0, float width = 100.f, float height = 100.f)
     {
-        nodes.reserve(MAX_NODES);
-        QuadNode n(x, y, width, height, nullNode);
+        nodes.reserve(maxNodes);
+        QuadNode root(x, y, width, height, nullNode);
         //QuadNode c = std::move(n);
-        nodes.push_back(n);
+        nodes.push_back(root);
     }
 
     /* float getDistance(QuadNode& node, float x, float y)
@@ -51,6 +65,16 @@ public:
     float getRootHeight()
     {
         return nodes.at(0).height;
+    }
+
+    QuadNode& getRoot()
+    {
+        return nodes.at(0);
+    }
+
+    QuadNode& getNullNode()
+    {
+        return nullNode;
     }
 
     struct Iterator{
@@ -159,6 +183,11 @@ public:
         return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y, depth + 1);
     }
 
+    QuadNode& locateNodeByPosition(float x, float y)
+    {
+        return locateNodeByPosition(nodes.at(0), x, y, 0);
+    }
+
     bool contains(QuadNode& node, const T& val)
     {
         QuadNode& n = locateNodeByPosition(node, val.x, val.y);
@@ -190,8 +219,6 @@ public:
 
     void add(const T& data, QuadNode& node)
     {
-        if(allElements >= MAX_NODES)
-            return;
         QuadNode& n = locateNodeByPosition(nodes.at(0), data.x, data.y, 0);
         if(n.elements < threshhold)
         {
@@ -490,6 +517,74 @@ public:
         return false;
     }
 
+    bool withinNode(QuadNode& area, QuadNode& check)
+    {
+        return within(area.x - area.width/2, area.x + area.width/2, check.x) && within(area.y - area.height/2, area.y + area.height/2, check.y);
+    }
+
+    Iterator getAfterChildrenIterator(QuadNode& node)
+    {
+        Iterator itr(&node);
+        while(itr != end())
+        {
+            if(!withinNode(node, *itr))
+                return itr;
+            itr.operator++();
+        }
+        return itr;
+    }
+
+    bool isSameLevel(QuadNode& first, QuadNode& second)
+    {
+        return fabs(first.width) == fabs(second.width);
+    }
+
+    bool isNullNode(QuadNode& node)
+    {
+        return &node == &nullNode;
+    }
+
+    bool isNeighbour(QuadNode& first, QuadNode& second)
+    {
+        if(isNullNode(first) || isNullNode(second))
+            return false;
+        return first.parent == second.parent;
+    }
+
+    bool isChild(QuadNode& parent, QuadNode& potentialChild)
+    {
+        return withinNode(parent, potentialChild);
+    }
+
+    bool isNextTo(QuadNode& first, QuadNode& second)
+    {
+        if(isNullNode(first) || isNullNode(second))
+            return false;
+        if(first.x + first.width/2 + second.width/2 == second.x || second.x + second.width/2 + first.width/2 == first.x)
+            return true;
+        if(first.y + first.height/2 + second.height/2 == second.y || second.y + second.height/2 + first.height/2 == first.y)
+            return true;
+        return false;
+    }
+
+    bool checkFunctionInNode(QuadNode& node, float a, float b)
+    {
+        if(within(node.y - node.height/2, node.y + node.height/2, a * node.x + b))
+            return true;
+        if(within(node.y - node.height/2, node.y + node.height/2, a * (node.x - node.width/2) + b))
+            return true;
+        if(within(node.y - node.height/2, node.y + node.height/2, a * (node.x + node.width/2) + b))
+            return true;
+        if(within(node.x - node.height/2, node.x + node.height/2, (node.y - b) / 2))
+            return true;
+        if(within(node.x - node.height/2, node.x + node.height/2, (node.y - node.height/2 - b) / 2))
+            return true;
+        if(within(node.x - node.height/2, node.x + node.height/2, (node.y + node.height/2 - b) / 2))
+            return true;
+
+        return false;
+    }
+
     void updateElement(QuadNode& node, size_t index, std::function<void(QuadNode&)> func)
     {
         if(index < node.elements)
@@ -579,35 +674,87 @@ public:
         return nodes;
     }
 
-    std::vector<QuadNode*> getNodesInArea(QuadNode& node, const T& data) // ?
+    /* std::vector<QuadNode*> getNodesInArea(QuadNode& node, const T& data) // ?
     {
-        /* std::vector<QuadNode*> nodes;
-        if(node.x + node.width/2 < x || node.x - node.width/2 > x + width || node.y + node.height/2 < y || node.y - node.height/2 > y + height)
-            return nodes;
-        if(node.children[0] == node.children[1])
-        {
-            nodes.push_back(&node);
-            return nodes;
-        }
-        for(int i = 0; i < 4; i++)
-        {
-            std::vector<QuadNode*> temp = getNodesInArea(*(node.children[i]), x, y, width, height);
-            nodes.insert(nodes.end(), temp.begin(), temp.end());
-        }
-        return nodes; */
         std::vector<QuadNode*> nodesReturn;
-
-        /* if(x + width/2 < node.x + node.width/2 && x - width/2 > node.x - node.width/2 && y + height/2 < node.y + node.height/2 && y - height/2 > node.y - node.height/2)
-        {
-            nodes.push_back(&node);
-            return nodes;
-        } */
 
         for(int i = 0; i < T::size(); i++)
         {
             QuadNode& n = locateNodeByPosition(node, (data.cbegin() + i)->x, (data.cbegin() + i)->y, 0);
-            if(/* &n != &node &&  */std::find(nodesReturn.begin(), nodesReturn.end(), &n) == nodesReturn.end())
+            if(std::find(nodesReturn.begin(), nodesReturn.end(), &n) == nodesReturn.end())
                 nodesReturn.push_back(&n);
+        }
+
+        // rozrysowac i policzyc, mozna lokalizowac narozniki, a glebokosc liczyc arytmetycznie, a nie gonic wskazniki
+        return nodesReturn;
+    } */
+
+    int levelDifference(QuadNode& first, QuadNode& second)
+    {
+        float multiplayer;
+        if (second.width < first.width)
+            return lround(log2(first.width / second.width));
+        else if(first.width < second.width)
+            return -lround(log2(second.width / first.width));
+        else
+            return 0;
+    }
+
+    std::vector<QuadNode*> getNodesInArea(QuadNode& node, const T& data) // ?
+    {
+        std::vector<QuadNode*> nodesReturn;
+
+        for(int i = 0; i < T::size(); i++)
+        {
+            pos v1 = *(data.cbegin() + i);
+            QuadNode* n1 = &(locateNodeByPosition(node, (data.cbegin() + i)->x, (data.cbegin() + i)->y, 0));
+            QuadNode* n2 = &(i != T::size() - 1 ? locateNodeByPosition(node, (data.cbegin() + i + 1)->x, (data.cbegin() + i + 1)->y, 0) : locateNodeByPosition(node, (data.cbegin())->x, (data.cbegin())->y, 0));
+            if(isSameLevel(*n1, *n2) && (n1 == n2 || isNextTo(*n1, *n2)))
+            {
+                if(std::find(nodesReturn.begin(), nodesReturn.end(), n1) == nodesReturn.end())
+                    nodesReturn.push_back(n1);
+                continue;
+            }
+
+            pos v2 = *(i != T::size() - 1 ? (data.cbegin() + i + 1) : (data.cbegin()));
+            float a = (v2.y - v1.y) / (v2.x - v1.x);
+            float b = v1.y - a * v1.x;
+            int levelDiff = levelDifference(*n1, *n2);
+            while(levelDiff < 0)
+            {
+                n1 = n1->parent;
+                levelDiff++;
+            }
+            while(levelDiff > 0)
+            {
+                n2 = n2->parent;
+                levelDiff--;
+            }
+
+            while(n1 != n2 && !isNextTo(*n1, *n2))
+            {
+                n1 = n1->parent;
+                n2 = n2->parent;
+            }
+
+            for(Iterator itr(n1); itr != getAfterChildrenIterator(*n1); itr.operator++())
+            {
+                if(checkFunctionInNode(*itr, a, b))
+                {
+                    if(std::find(nodesReturn.begin(), nodesReturn.end(), &(*itr)) == nodesReturn.end())
+                        nodesReturn.push_back(&(*itr));
+                }
+            }
+
+            for(Iterator itr(n2); itr != getAfterChildrenIterator(*n2); itr.operator++())
+            {
+                if(checkFunctionInNode(*itr, a, b))
+                {
+                    if(std::find(nodesReturn.begin(), nodesReturn.end(), &(*itr)) == nodesReturn.end())
+                        nodesReturn.push_back(&(*itr));
+                }
+            }
+
         }
 
         // rozrysowac i policzyc, mozna lokalizowac narozniki, a glebokosc liczyc arytmetycznie, a nie gonic wskazniki

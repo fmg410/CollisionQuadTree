@@ -1,3 +1,6 @@
+#ifndef RAINBOWGENERATOR_HPP
+#define RAINBOWGENERATOR_HPP
+
 struct RainbowGenerator{
     unsigned char r = 0;
     unsigned char g = 0;
@@ -20,3 +23,5 @@ struct RainbowGenerator{
         return *this;
     }
 };
+
+#endif
