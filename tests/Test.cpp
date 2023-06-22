@@ -6,54 +6,58 @@
 
 using namespace csv2;
 
+constexpr unsigned int DEFAULT_VERTICES_COUNT = 8;
+const unsigned int DEFAULT_TREE_THRESHHOLD = 80;
+
 template<unsigned int vertices, unsigned int treshhold>
-void testTree(unsigned int elements, unsigned int maxIterations, float scale, float areaWidth, float areaHeight, float initialX, float initialY);
+float testTree(std::string filename, unsigned int elements, unsigned int maxIterations, float scale, float areaWidth, float areaHeight, float initialX, float initialY);
+
+template<unsigned int vertices>
+float testVector(std::string filename, unsigned int elements, unsigned int maxIterations, float scale, float areaWidth, float areaHeight, float initialX, float initialY);
+
+//for ending recursion
+template<std::size_t min, std::size_t max, bool vertices = true>
+typename std::enable_if<min==max+1>::type treeSwitcher(std::string filename, unsigned int elements = 1000, unsigned int maxIterations = 1000, float scale = 15.f, float areaWidth = 1000.f, float areaHeight = 1000.f, float initialX = 0.f, float initialY = 0.f)
+{
+
+}
+
+//version that will do the real work
+template<std::size_t min, std::size_t max, bool vertices = true>
+typename std::enable_if<min!=max+1>::type treeSwitcher(std::string filename, unsigned int elements = 1000, unsigned int maxIterations = 1000, float scale = 15.f, float areaWidth = 1000.f, float areaHeight = 1000.f, float initialX = 0.f, float initialY = 0.f)
+{
+    float time = 0;
+    if constexpr (vertices)
+        time = testTree<min, DEFAULT_TREE_THRESHHOLD>(filename, elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
+    else
+        time = testTree<DEFAULT_VERTICES_COUNT, min>(filename, elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
+    std::ofstream file(filename, std::ios::app);
+    Writer<delimiter<','>> writer(file);
+    std::vector<std::string> row ={std::to_string(vertices ? min : DEFAULT_VERTICES_COUNT), std::to_string(!vertices ? min : DEFAULT_TREE_THRESHHOLD), std::to_string(elements), std::to_string(maxIterations), std::to_string(scale), std::to_string(areaWidth), std::to_string(areaHeight), std::to_string(initialX), std::to_string(initialY), std::to_string(time)};
+    writer.write_row(row);
+    file.close();
+    std::cout << "Current min: " << min << std::endl;
+    treeSwitcher<min+1, max, vertices>(filename, elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
+}
 
 //for ending recursion
 template<std::size_t min, std::size_t max>
-typename std::enable_if<min==max+1>::type treeSwitcher(unsigned int elements = 1000, unsigned int maxIterations = 1000, float scale = 15.f, float areaWidth = 1000.f, float areaHeight = 1000.f, float initialX = 0.f, float initialY = 0.f)
+typename std::enable_if<min==max+1>::type vectorSwitcher(std::string filename, unsigned int elements = 1000, unsigned int maxIterations = 1000, float scale = 15.f, float areaWidth = 1000.f, float areaHeight = 1000.f, float initialX = 0.f, float initialY = 0.f)
 {
 
 }
 
 //version that will do the real work
 template<std::size_t min, std::size_t max>
-typename std::enable_if<min!=max+1>::type treeSwitcher(unsigned int elements = 1000, unsigned int maxIterations = 1000, float scale = 15.f, float areaWidth = 1000.f, float areaHeight = 1000.f, float initialX = 0.f, float initialY = 0.f)
+typename std::enable_if<min!=max+1>::type vectorSwitcher(std::string filename, unsigned int elements = 1000, unsigned int maxIterations = 1000, float scale = 15.f, float areaWidth = 1000.f, float areaHeight = 1000.f, float initialX = 0.f, float initialY = 0.f)
 {
-    testTree<min, 4>(elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
-    f<min+1, max>();
+    testVector<min>(filename, elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
+    vectorSwitcher<min+1, max>(filename, elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
 }
 
-/* template<typename T>
-void all()
-{
-    unsigned int elements = 5000;
-    unsigned int maxIterations = 100;
-    float scale = 15.f;
-    float areaWidth = 1000.f;
-    float areaHeight = 1000.f;
-    float initialX = 0.f;
-    float initialY = 0.f;
-
-    for(constexpr int i = 3; i < 14; i++)
-        testTree<i, 8>(elements, maxIterations, scale, areaWidth, areaHeight, initialX, initialY);
-} */
-
 template<unsigned int vertices, unsigned int treshhold>
-void testTree(unsigned int elements, unsigned int maxIterations, float scale, float areaWidth, float areaHeight, float initialX, float initialY)
+float testTree(std::string filename, unsigned int elements, unsigned int maxIterations, float scale, float areaWidth, float areaHeight, float initialX, float initialY)
 {
-    std::ofstream file("test.csv", std::ios::app);
-    Writer<delimiter<','>> writer(file);
-
-    std::vector<std::vector<std::string>> rows =
-        {
-            {"a", "b", "c"},
-            {"1", "2", "3"},
-            {"4", "5", "6"}
-        };
-
-    writer.write_rows(rows);
-    file.close();
     using Figure = Figure<vertices>;
     using QuadTree = QuadTree<Figure, treshhold>;
 
@@ -97,33 +101,33 @@ void testTree(unsigned int elements, unsigned int maxIterations, float scale, fl
         {
             int64_t average = 0;
             std::for_each(timings.begin(), timings.end(), [&](auto& t){ average += t; });
-            std::cout << "Collision count : " << collisionCount << std::endl;
-            std::cout << "CollisionQuadTree : Average collision detection time for " << maxIterations << " iterations for " << elements << " elements with " << Figure::size() << " vertices and treshhold " << treshhold << " is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl;
-            break;
+            /* std::cout << "Collision count : " << collisionCount << std::endl;
+            std::cout << "CollisionQuadTree : Average collision detection time for " << maxIterations << " iterations for " << elements << " elements with " << Figure::size() << " vertices and treshhold " << treshhold << " is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl; */
+            return average * 1.f / timings.size();
         }
         if(maxIterations != -1)
             iterations++;
     }
-
+    return 0;
 }
 
-void testVector()
+template<unsigned int vertices>
+float testVector(std::string filename, unsigned int elements, unsigned int maxIterations, float scale, float areaWidth, float areaHeight, float initialX, float initialY)
 {
-    using Figure = Figure<VERTICES_COUNT>;
-    using QuadTree = QuadTree<Figure, TREE_THRESHHOLD>;
+    using Figure = Figure<vertices>;
 
     std::vector<Figure> vec;
-    vec.reserve(CURRENT_ELEMENTS + 1);
+    vec.reserve(elements + 1);
 
     std::default_random_engine generator;
-    std::uniform_real_distribution<float> posGenerator(-AREA_WIDTH/2, AREA_WIDTH/2);
+    std::uniform_real_distribution<float> posGenerator(-areaWidth/2, areaWidth/2);
     std::uniform_real_distribution<float> speedGenerator(-3.f, 3.f);
-    std::uniform_real_distribution<float> scaleGenerator(2.f, SCALE);
+    std::uniform_real_distribution<float> scaleGenerator(2.f, scale);
     std::uniform_real_distribution<float> angleGenerator(0.f, 359.f);
 
-    for(int i = 0; i < CURRENT_ELEMENTS; i++)
+    for(int i = 0; i < elements; i++)
     {
-        Figure f{posGenerator(generator), posGenerator(generator), speedGenerator(generator), speedGenerator(generator), scaleGenerator(generator)};
+        Figure f{posGenerator(generator), posGenerator(generator), speedGenerator(generator), speedGenerator(generator), /* scaleGenerator(generator) */ 2.f};
         f.increaseAngle(angleGenerator(generator));
         vec.push_back(f);
     }
@@ -149,23 +153,30 @@ void testVector()
         time_point<Clock> end = Clock::now();
         nanoseconds diff = duration_cast<nanoseconds>(end - start);
         timings.push_back(diff.count());
-        if(iterations >= MAX_ITERATIONS)
+        if(iterations >= maxIterations)
         {
             int64_t average = 0;
             std::for_each(timings.begin(), timings.end(), [&](auto& t){ average += t; });
-            std::cout << "Collision count : " << collisionCount << std::endl;
-            std::cout << "CollisionQuadTree : Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements with " << Figure::size() << " vertices is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl;
-            break;
+            /* std::cout << "Collision count : " << collisionCount << std::endl;
+            std::cout << "Vector : Average collision detection time for " << maxIterations << " iterations for " << elements << " elements with " << Figure::size() << " vertices and treshhold " << treshhold << " is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl; */
+            return average * 1.f / timings.size();
         }
-        if(MAX_ITERATIONS != -1)
+        if(maxIterations != -1)
             iterations++;
     }
-
+    return 0;
 }
 
 int main()
 {
-    treeSwitcher<3, 40>();
+    std::string filename = "tree.csv";
+    std::ofstream file(filename, std::ios::app);
+    Writer<delimiter<','>> writer(file);
+    std::vector<std::string> row ={"Vertices", "Treshhold", "Elements", "Max iterations", "Figure scale", "Area width", "Area height", "Root X", "Root Y", "Average all collision time"};
+    writer.write_row(row);
+    file.close();
+    treeSwitcher<3, 5, true>(filename); //vertices
+    treeSwitcher<3, 5, false>(filename); //treshhold
     //all<int>();
     //testTree();
     //testVector();
