@@ -12,13 +12,9 @@ struct QuadNode{
     float height{};
     QuadNode<T, size>* children[4] = {this, this, this, this}; // non-owning pointers
     QuadNode<T, size>* parent = this; // non-owning pointer
-    /* std::vector<T>::iterator begin;
-    std::vector<T>::iterator end; */
     std::array<T, size> data;
     size_t elements = 0;
     T* lastElement() { return data.begin() + elements; }
-    /* T* begin{};
-    T* end{}; */
     QuadNode() = default;
     QuadNode(QuadNode<T, size>& nullNode)
     : children{&nullNode, &nullNode, &nullNode, &nullNode}

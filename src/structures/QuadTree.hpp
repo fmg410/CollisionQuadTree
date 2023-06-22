@@ -81,8 +81,8 @@ public:
         using iterator_category = std::forward_iterator_tag;
         using difference_type   = std::ptrdiff_t;
         using value_type        = QuadNode;
-        using pointer           = QuadNode*;  // or also value_type*
-        using reference         = QuadNode&;  // or also value_type&
+        using pointer           = QuadNode*;
+        using reference         = QuadNode&;
 
         Iterator(pointer ptr) : m_ptr(ptr) {}
 
@@ -176,10 +176,7 @@ public:
         if(node.children[0] == node.children[1])
             return node;
         if(&node == &nullNode)
-            return node; // ??
-        /* int child = (x < node.x) + (y < node.y) * 3;
-        child -= (child / 4) * 2;
-        return locateNodeByPosition(*(node.children[child]), x, y); */
+            return node;
         return locateNodeByPosition(*(node.children[QuadrantByPoint(node, x, y)]), x, y, depth + 1);
     }
 
@@ -825,9 +822,6 @@ public:
     // return range [0, 3]
     int QuadrantByPoint(float centerX, float centerY, float posX, float posY)
     {
-        /* int quadrant = (centerX < posX) + (centerY < posY) * 3;
-        quadrant -= (quadrant / 4) * 2;
-        return quadrant; */
         if(posX >= centerX && posY > centerY)
             return 0;
         else if(posX < centerX && posY >= centerY)

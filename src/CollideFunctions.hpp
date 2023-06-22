@@ -33,7 +33,8 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                                     {
                                         collisionCount++;
                                         applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
-                                        applyBoundariesNode(node.data.at(j), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                                        applyBoundariesNode(otherNodes->data.at(j), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                                        tree.correctDataPosition(*otherNodes, j);
                                     }
                                 }
                         }

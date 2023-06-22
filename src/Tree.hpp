@@ -24,7 +24,7 @@ void testTree() // TODO: update member (first find member...)
 
     for(int i = 0; i < CURRENT_ELEMENTS; i++)
     {
-        Figure f{posGenerator(generator), posGenerator(generator), speedGenerator(generator), speedGenerator(generator), scaleGenerator(generator)};
+        Figure f{posGenerator(generator), posGenerator(generator), speedGenerator(generator), speedGenerator(generator), SCALE};
         f.increaseAngle(angleGenerator(generator));
         tree.add(f);
     }
