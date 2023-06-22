@@ -11,6 +11,8 @@
 #include "collision/DrawableFigure.hpp"
 #include "collision/Collision.hpp"
 #include "utils/RainbowGenerator.hpp"
+#include <random>
+#include <functional>
 
 //#define NO_UI
 
@@ -26,13 +28,15 @@ const bool SIMULATE_BOTH = false;
 const bool SIMULATE_TREE = true;
 const bool START_PAUSED = false;
 constexpr unsigned int VERTICES_COUNT = 7;
-const unsigned int TREE_THRESHHOLD = 8;
-const float SCALE = 20.f;
-const int CURRENT_ELEMENTS = 25000;
+const unsigned int TREE_THRESHHOLD = 80;
+const float SCALE = 15.f;
+const int CURRENT_ELEMENTS = 1000;
 const unsigned int MAX_ITERATIONS = 1000; // -1 for infinity
 
-const float AREA_WIDTH = 10000.f;
-const float AREA_HEIGHT = 10000.f;
+const float AREA_WIDTH = 1000.f;
+const float AREA_HEIGHT = 1000.f;
+const float INITIAL_X = 0.f;
+const float INITIAL_Y = 0.f;
 
 static const float VIEW_HEIGHT = 600.f;
 
@@ -64,4 +68,4 @@ void zoomViewAt(sf::Vector2i pixel, sf::RenderWindow& window, float zoom, sf::Vi
 }
 #endif
 
-#endif
+#endif // SETTINGS_HPP

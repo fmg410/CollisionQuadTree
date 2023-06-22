@@ -2,33 +2,32 @@
 #define TREE_HPP
 
 #include "Settings.hpp"
+#include "CollideFunctions.hpp"
 
 
 void testTree() // TODO: update member (first find member...)
 {
     using Figure = Figure<VERTICES_COUNT>;
 
-    std::array<int, 5> a;
-    a.at(0) = 3;
-
-    QuadTree<Figure, TREE_THRESHHOLD> tree(100000, 0, 0, AREA_WIDTH, AREA_HEIGHT);
+    QuadTree<Figure, TREE_THRESHHOLD> tree(100000, INITIAL_X, INITIAL_Y, AREA_WIDTH, AREA_HEIGHT);
 
     srand(0);
-    /* Figure f{float(rand() % 1000 - 500), float(rand() % 1000) - 500, (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, SCALE * 10};
-        f.increaseAngle(rand() % 360);
-        //if(!tree.contains(f))
+/*     Figure f{0.f, 0.f, 2.f, 2.f, 800.f};
+        f.increaseAngle(5.f);
             tree.add(f); */
+
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> posGenerator(-AREA_WIDTH/2, AREA_WIDTH/2);
+    std::uniform_real_distribution<float> speedGenerator(-3.f, 3.f);
+    std::uniform_real_distribution<float> scaleGenerator(2.f, SCALE);
+    std::uniform_real_distribution<float> angleGenerator(0.f, 359.f);
+
     for(int i = 0; i < CURRENT_ELEMENTS; i++)
     {
-        Figure f{float(rand() % int(tree.getRootWidth()) - tree.getRootWidth()/2), float(rand() % int(tree.getRootHeight()) - tree.getRootHeight()/2), (rand() % 30) / 10.f - 0.5f, (rand() % 30) / 10.f - 0.5f, 2.f /* rand() % 20 + 5.f */};
-        f.increaseAngle(rand() % 360);
-        //if(!tree.contains(f))
-            tree.add(f);
-        //else
-        //    i--;
+        Figure f{posGenerator(generator), posGenerator(generator), speedGenerator(generator), speedGenerator(generator), scaleGenerator(generator)};
+        f.increaseAngle(angleGenerator(generator));
+        tree.add(f);
     }
-
-
 
     #ifndef NO_UI
 
@@ -157,58 +156,7 @@ void testTree() // TODO: update member (first find member...)
         if(!pause)
         {
             time_point<Clock> start = Clock::now();
-            for(int m = 0; m < 1; m++)
-            {
-                for(auto& node : tree)
-                    for(int i = 0; i < node.elements; i++)
-                    {
-                        updateSpeed(node.data.at(i), 1.f);
-                        applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
-                    }
-                for(auto& node : tree)
-                {
-                    /* for(int i = 0; i < node.elements; i++)
-                    {
-                        //std::cout << "Node " << num << ": " << node.data.at(i).x << " " << node.data.at(i).y << '\n';
-                    } */
-                    /* for(int i = 0; i < node.elements; i++)
-                        for(int j = i + 1; j < node.elements - 1; j++)
-                                collide(node.data.at(i), node.data.at(j)); */
-                    for(int i = 0; i < node.elements; i++)
-                    {
-                        if(node.data.at(i).collisionChecked)
-                            continue;
-                        else
-                            node.data.at(i).collisionChecked = true;
-
-                        auto list = tree.getNodesInArea(node, node.data.at(i));
-                        for(auto& otherNodes : list)
-                        {
-                            for(int j = 0; j < otherNodes->elements; j++)
-                                if(node.data.at(i) != otherNodes->data.at(j))
-                                {
-                                    if(collideAdv(node.data.at(i), otherNodes->data.at(j), 1.f))
-                                    {
-                                        collisionCount++;
-                                        applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
-                                        applyBoundariesNode(node.data.at(j), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
-                                    }
-                                }
-                        }
-                    }
-                    for(int i = 0; i < node.elements; i++)
-                    {
-                        if(tree.correctDataPosition(node, i))
-                            i--;
-                    }
-                    num++;
-                }
-            }
-            tree.mergeTree();
-
-            for(auto& node : tree)
-                for(int i = 0; i < node.elements; i++)
-                    node.data.at(i).collisionChecked = false;
+            collideTree<Figure, TREE_THRESHHOLD>(tree, collideAdv<Figure>, collisionCount); // collisions
             time_point<Clock> end = Clock::now();
             nanoseconds diff = duration_cast<nanoseconds>(end - start);
             timings.push_back(diff.count());

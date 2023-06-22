@@ -2,6 +2,7 @@
 #define VECTOR_HPP
 
 #include "Settings.hpp"
+#include "CollideFunctions.hpp"
 
 void testVector() // TODO: update member (first find member...)
 {
@@ -149,28 +150,7 @@ void testVector() // TODO: update member (first find member...)
         if(!pause)
         {
             time_point<Clock> start = Clock::now();
-            for(int m = 0; m < 1; m++)
-            {
-                for(int i = 0; i < vec.size(); i++)
-                {
-                    updateSpeed(vec.at(i), 1.f);
-                    applyBoundariesNode(vec.at(i), 0.f, 0.f, 1000.f, 1000.f);
-                }
-                for(int i = 0; i < vec.size(); i++)
-                {
-                    for(int j = i + 1; j < vec.size(); j++)
-                    {
-                        /* if((vec.at(i).x - vec.at(j).x) * (vec.at(i).x - vec.at(j).x) + (vec.at(i).y - vec.at(j).y) * (vec.at(i).y - vec.at(j).y) > 800000.f)
-                            continue; */
-                        if(collideAdv(vec.at(i), vec.at(j), 1.f))
-                        {
-                            collisionCount++;
-                            applyBoundariesNode(vec.at(i), 0.f, 0.f, 1000.f, 1000.f);
-                            applyBoundariesNode(vec.at(j), 0.f, 0.f, 1000.f, 1000.f);
-                        }
-                    }
-                }
-            }
+            collideVector<Figure>(vec, collideAdv<Figure>, collisionCount); // collisions
             time_point<Clock> end = Clock::now();
             nanoseconds diff = duration_cast<nanoseconds>(end - start);
             timings.push_back(diff.count());

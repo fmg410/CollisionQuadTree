@@ -1,4 +1,6 @@
-#pragma once
+#ifndef COLLISION_HPP
+#define COLLISION_HPP
+
 #include "pos.hpp"
 #include <limits>
 #include <algorithm>
@@ -123,3 +125,5 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 	}
 	return collided;
 }
+
+#endif // COLLISION_HPP
