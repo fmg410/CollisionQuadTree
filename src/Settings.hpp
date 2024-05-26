@@ -21,7 +21,7 @@
 #include <SFML/Graphics.hpp>
 #endif
 
-#define ROTATE_FIGURES
+//#define ROTATE_FIGURES
 #include "physics/functions.hpp"
 
 const bool SIMULATE_BOTH = false;
@@ -29,12 +29,12 @@ const bool SIMULATE_TREE = true;
 const bool START_PAUSED = false;
 constexpr unsigned int VERTICES_COUNT = 7;
 const unsigned int TREE_THRESHHOLD = 8;
-const float SCALE = 15.f;
-const int CURRENT_ELEMENTS = 1000;
-const unsigned int MAX_ITERATIONS = 1000; // -1 for infinity
+const float SCALE = 10.f;
+const int CURRENT_ELEMENTS = 20000;
+const unsigned int MAX_ITERATIONS = -1; // -1 for infinity
 
-const float AREA_WIDTH = 1000.f;
-const float AREA_HEIGHT = 1000.f;
+const float AREA_WIDTH = 10000.f;
+const float AREA_HEIGHT = 10000.f;
 const float INITIAL_X = 0.f;
 const float INITIAL_Y = 0.f;
 

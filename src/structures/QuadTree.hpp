@@ -697,7 +697,7 @@ public:
             return 0;
     }
 
-    std::vector<QuadNode*> getNodesInArea(QuadNode& node, const T& data) // ?
+    std::vector<QuadNode*> getNodesInArea(QuadNode& node, const T& data) // dorzucic sprawdzenie dla srodkowego punktu czy sasiaduje z wierzcholkami
     {
         std::vector<QuadNode*> nodesReturn;
 
