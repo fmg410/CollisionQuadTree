@@ -225,6 +225,8 @@ public:
         }
         else
         {
+            // if(nodes.size() > 9000)
+            //     return;
             divide(n);
             add(data, n);
         }

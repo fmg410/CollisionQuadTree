@@ -9,7 +9,7 @@ void testTree() // TODO: update member (first find member...)
 {
     using Figure = Figure<VERTICES_COUNT>;
 
-    QuadTree<Figure, TREE_THRESHHOLD> tree(100000, INITIAL_X, INITIAL_Y, AREA_WIDTH, AREA_HEIGHT);
+    QuadTree<Figure, TREE_THRESHHOLD> tree(1000000, INITIAL_X, INITIAL_Y, AREA_WIDTH, AREA_HEIGHT);
 
     srand(0);
 /*     Figure f{0.f, 0.f, 2.f, 2.f, 800.f};
@@ -28,6 +28,20 @@ void testTree() // TODO: update member (first find member...)
         f.increaseAngle(angleGenerator(generator));
         tree.add(f);
     }
+
+// float scale = 0.001f;
+//     Figure ttt{3000.f, 3000.f, 0.f, 0.f, scale};
+// float r =ttt.getR();
+// tree.add(ttt);
+
+//     for (int i = 0; i < TREE_THRESHHOLD + 1; i++)
+//     {
+//         Figure f{AREA_WIDTH/2, AREA_HEIGHT/2, 0.f, 0.f, scale};
+//         tree.add(f);
+//     }
+// std::cout <<"R: " << r << std::endl;
+// //std::cout << "tree:" << tree.allElements << std::endl;
+// //std::cout << "Node: " << sizeof(QuadNode<Figure, 8>) << std::endl;
 
     #ifndef NO_UI
 
@@ -97,28 +111,28 @@ void testTree() // TODO: update member (first find member...)
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).y -= 1.f;
+                    (*c).data.at(0).y -= (*c).data.at(0).getR();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
                 {
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).y += 1.f;
+                    (*c).data.at(0).y += (*c).data.at(0).getR();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
                 {
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).x -= 1.f;
+                    (*c).data.at(0).x -= (*c).data.at(0).getR();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
                 {
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).x += 1.f;
+                    (*c).data.at(0).x += (*c).data.at(0).getR();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::X))
                 {
@@ -130,6 +144,13 @@ void testTree() // TODO: update member (first find member...)
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::P))
                 {
                     pause = !pause;
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::M))
+                {
+std::cout << "size:" << tree.nodes.size() << std::endl;
+std::cout << "capacity:" << tree.nodes.capacity() << std::endl;
+
+
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::C))
                 {

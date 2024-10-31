@@ -109,6 +109,16 @@ struct Figure{
         return !(*this == f);
     }
 
+    float getR()
+    {
+        pos p1 = calculatedPoints[0];
+        pos p2 = calculatedPoints[1];
+        float x = p1.x - p2.x;
+        float y = p1.y - p2.y;
+        float r = sqrtf(x * x + y * y);
+        return r;
+    }
+
 private:
     pos calculatedPoints[N];
     pos model[N];
