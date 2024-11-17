@@ -30,11 +30,11 @@ const bool START_PAUSED = false;
 constexpr unsigned int VERTICES_COUNT = 7;
 const unsigned int TREE_THRESHHOLD = 4; // 8
 const float SCALE = 10.f;
-const int CURRENT_ELEMENTS = 200000; // 20 000
+const int CURRENT_ELEMENTS = 20000; // 20 000
 const unsigned int MAX_ITERATIONS = -1; // -1 for infinity
 
-const float AREA_WIDTH = 100000.f; // 10 000
-const float AREA_HEIGHT = 100000.f; // 10 000
+const float AREA_WIDTH = 10000.f; // 10 000
+const float AREA_HEIGHT = 10000.f; // 10 000
 const float INITIAL_X = 0.f;
 const float INITIAL_Y = 0.f;
 
