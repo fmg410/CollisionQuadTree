@@ -46,6 +46,7 @@ void testTree() // TODO: update member (first find member...)
     #ifndef NO_UI
 
     bool pause = START_PAUSED;
+    bool singleFrame = false;
     unsigned int iterations = 0;
 
 
@@ -145,6 +146,10 @@ void testTree() // TODO: update member (first find member...)
                 {
                     pause = !pause;
                 }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::J))
+                {
+                    singleFrame = true;
+                }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::M))
                 {
 std::cout << "size:" << tree.nodes.size() << std::endl;
@@ -174,7 +179,7 @@ std::cout << "capacity:" << tree.nodes.capacity() << std::endl;
         window.clear(sf::Color::Black);
 
         int num = 0;
-        if(!pause)
+        if(!pause or singleFrame)
         {
             time_point<Clock> start = Clock::now();
             collideTree<Figure, TREE_THRESHHOLD>(tree, collideAdv<Figure>, collisionCount); // collisions
@@ -191,6 +196,7 @@ std::cout << "capacity:" << tree.nodes.capacity() << std::endl;
             }
             if(MAX_ITERATIONS != -1)
                 iterations++;
+            singleFrame = false;
         }
 
 
