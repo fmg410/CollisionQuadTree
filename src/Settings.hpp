@@ -32,6 +32,7 @@ const unsigned int TREE_THRESHHOLD = 16; // 8
 const float SCALE = 50.f;
 const int CURRENT_ELEMENTS = 2000; // 20 000
 const unsigned int MAX_ITERATIONS = -1; // -1 for infinity
+const unsigned int MAX_SNAPSHOTS = 100;
 
 const float AREA_WIDTH = 10000.f; // 10 000
 const float AREA_HEIGHT = 10000.f; // 10 000

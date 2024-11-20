@@ -3,6 +3,7 @@
 
 #include "Settings.hpp"
 #include "CollideFunctions.hpp"
+#include <list>
 
 
 void testTree() // TODO: update member (first find member...)
@@ -49,6 +50,7 @@ void testTree() // TODO: update member (first find member...)
     bool singleFrame = false;
     unsigned int iterations = 0;
 
+    std::list<QuadTree<Figure, TREE_THRESHHOLD>> snapshots;
 
     using Clock = std::chrono::steady_clock;
     using std::chrono::time_point;
@@ -150,6 +152,14 @@ void testTree() // TODO: update member (first find member...)
                 {
                     singleFrame = true;
                 }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::H))
+                {
+                    if(!snapshots.empty())
+                    {
+                        tree = snapshots.back();
+                        snapshots.pop_back();
+                    }
+                }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::M))
                 {
 std::cout << "size:" << tree.nodes.size() << std::endl;
@@ -181,6 +191,9 @@ std::cout << "capacity:" << tree.nodes.capacity() << std::endl;
         int num = 0;
         if(!pause or singleFrame)
         {
+            snapshots.push_back(tree);
+            if(snapshots.size() > MAX_SNAPSHOTS)
+                snapshots.pop_front();
             time_point<Clock> start = Clock::now();
             collideTree<Figure, TREE_THRESHHOLD>(tree, collideAdv<Figure>, collisionCount); // collisions
             time_point<Clock> end = Clock::now();
