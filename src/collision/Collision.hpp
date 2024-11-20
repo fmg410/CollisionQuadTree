@@ -66,63 +66,165 @@ bool collide(T& figure1, T& figure2, float modifier = 1.f)
 		return true;
 	}
 
+// template <typename T>
+// bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
+// {
+// 	bool collided = false;
+// 	T *poly1 = &figure1;
+// 	T *poly2 = &figure2;
+
+// 	for (int shape = 0; shape < 2; shape++)
+// 	{
+// 		if (shape == 1)
+// 		{
+// 			poly1 = &figure2;
+// 			poly2 = &figure1;
+// 		}
+
+// 		// Check diagonals of this polygon...
+// 		for (int p = 0; p < poly1->getSize(); p++)
+// 		{
+// 			pos line_r1s = pos{poly1->x, poly1->y};
+// 			pos line_r1e = *(poly1->begin() + p);
+
+// 			pos displacement = { 0,0 };
+
+// 			// ...against edges of this polygon
+// 			for (int q = 0; q < poly2->getSize(); q++)
+// 			{
+// 				pos line_r2s = *(poly2->begin() + q);
+// 				pos line_r2e = *(poly2->begin() + ((q + 1) % poly2->getSize()));
+
+// 				// Standard "off the shelf" line segment intersection
+// 				float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+// 				float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+// 				float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+// 				if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+// 				{
+// 					displacement.x += (1.0f - t1) * (line_r1e.x - line_r1s.x);
+// 					displacement.y += (1.0f - t1) * (line_r1e.y - line_r1s.y);
+// 					collided = true;
+// 				}
+// 			}
+
+// 			figure1.x += displacement.x * (shape == 0 ? -1 : +1) * modifier;
+// 			figure1.y += displacement.y * (shape == 0 ? -1 : +1) * modifier;
+// 		}
+// 	}
+
+// 	if(collided)
+// 	{
+// 		std::swap(figure2.velX, figure1.velY);
+// 		std::swap(figure1.velX, figure2.velY);
+// 		figure1.velX *= -1;
+// 		figure1.velY *= -1;
+// 		figure2.velX *= -1;
+// 		figure2.velY *= -1;
+// 	}
+// 	return collided;
+// }
+
 template <typename T>
 bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 {
-	bool collided = false;
-	T *poly1 = &figure1;
-	T *poly2 = &figure2;
+    bool collided = false;
+    T* poly1 = &figure1;
+    T* poly2 = &figure2;
+	pos displacement1 = {0, 0};
+	pos displacement2 = {0, 0};
+	pos displacementTemp = {0, 0};
 
-	for (int shape = 0; shape < 2; shape++)
-	{
-		if (shape == 1)
-		{
-			poly1 = &figure2;
-			poly2 = &figure1;
-		}
+    pos collisionNormal = {0, 0};
 
-		// Check diagonals of this polygon...
-		for (int p = 0; p < poly1->getSize(); p++)
-		{
-			pos line_r1s = pos{poly1->x, poly1->y};
-			pos line_r1e = *(poly1->begin() + p);
+    for (int shape = 0; shape < 2; shape++)
+    {
+        if (shape == 1)
+        {
+            poly1 = &figure2;
+            poly2 = &figure1;
+        }
 
-			pos displacement = { 0,0 };
+        for (int p = 0; p < poly1->getSize(); p++)
+        {
+            pos line_r1s = pos{poly1->x, poly1->y};
+            pos line_r1e = *(poly1->begin() + p);
 
-			// ...against edges of this polygon
-			for (int q = 0; q < poly2->getSize(); q++)
-			{
-				pos line_r2s = *(poly2->begin() + q);
-				pos line_r2e = *(poly2->begin() + ((q + 1) % poly2->getSize()));
+            for (int q = 0; q < poly2->getSize(); q++)
+            {
+                pos line_r2s = *(poly2->begin() + q);
+                pos line_r2e = *(poly2->begin() + ((q + 1) % poly2->getSize()));
 
-				// Standard "off the shelf" line segment intersection
-				float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
-				float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
-				float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+                float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+                float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+                float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
 
-				if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
-				{
-					displacement.x += (1.0f - t1) * (line_r1e.x - line_r1s.x);
-					displacement.y += (1.0f - t1) * (line_r1e.y - line_r1s.y);
-					collided = true;
-				}
-			}
+                if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                {
+                    displacementTemp.x += (1.0f - t1) * (line_r1e.x - line_r1s.x);
+                    displacementTemp.y += (1.0f - t1) * (line_r1e.y - line_r1s.y);
+                    collided = true;
+                }
+            }
 
-			figure1.x += displacement.x * (shape == 0 ? -1 : +1) * modifier;
-			figure1.y += displacement.y * (shape == 0 ? -1 : +1) * modifier;
-		}
-	}
+        }
+		if (shape == 0)
+			displacement1 = displacementTemp;
+		else
+			displacement2 = displacementTemp;
+    }
 
-	if(collided)
-	{
-		std::swap(figure2.velX, figure1.velY);
-		std::swap(figure1.velX, figure2.velY);
-		figure1.velX *= -1;
-		figure1.velY *= -1;
-		figure2.velX *= -1;
-		figure2.velY *= -1;
-	}
-	return collided;
+    if (collided)
+    {
+		figure1.x += displacement1.x * -1 * modifier;
+		figure1.y += displacement1.y * -1 * modifier;
+		figure2.x += displacement2.x * 1 * modifier;
+		figure2.y += displacement2.y * 1 * modifier;
+
+
+        // Normalize collision normal
+		collisionNormal = {displacement1.x + displacement2.x, displacement1.y + displacement2.y};
+        float normLength = std::sqrt(collisionNormal.x * collisionNormal.x + collisionNormal.y * collisionNormal.y);
+        if (normLength > 0)
+        {
+            collisionNormal.x /= normLength;
+            collisionNormal.y /= normLength;
+        }
+
+        // Relative velocity
+        pos relativeVelocity = {
+            figure2.velX - figure1.velX,
+            figure2.velY - figure1.velY
+        };
+
+        // Velocity along the normal
+        float velocityAlongNormal = relativeVelocity.x * collisionNormal.x + relativeVelocity.y * collisionNormal.y;
+
+        // If velocities are separating, do nothing
+        if (velocityAlongNormal > 0)
+            return collided;
+
+        // Restitution (bounciness)
+        float restitution = 1.0f; // Adjust as needed (1.0 = perfectly elastic, 0.0 = perfectly inelastic)
+
+        // Impulse scalar
+        float impulseScalar = -(1 + restitution) * velocityAlongNormal / 2.0f; // Divided by 2 for equal mass
+
+        // Impulse
+        pos impulse = {
+            impulseScalar * collisionNormal.x,
+            impulseScalar * collisionNormal.y
+        };
+
+        // Apply impulse to both figures
+        figure1.velX -= impulse.x;
+        figure1.velY -= impulse.y;
+        figure2.velX += impulse.x;
+        figure2.velY += impulse.y;
+    }
+
+    return collided;
 }
+
 
 #endif // COLLISION_HPP

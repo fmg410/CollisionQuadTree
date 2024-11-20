@@ -11,7 +11,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                 for(auto& node : tree)
                     for(int i = 0; i < node.elements; i++)
                     {
-                        updateSpeed(node.data.at(i), 1.f / steps);
+                        updateSpeed(node.data.at(i), 1.f / float(steps));
                         applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                     }
                 for(auto& node : tree)
@@ -29,7 +29,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                             for(int j = 0; j < otherNodes->elements; j++)
                                 if(node.data.at(i) != otherNodes->data.at(j))
                                 {
-                                    if(std::invoke(collider, node.data.at(i), otherNodes->data.at(j), 1.f / steps))
+                                    if(std::invoke(collider, node.data.at(i), otherNodes->data.at(j), 1.f / float(steps)))
                                     {
                                         collisionCount++;
                                         applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
