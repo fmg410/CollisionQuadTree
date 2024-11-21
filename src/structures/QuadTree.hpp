@@ -148,6 +148,13 @@ public:
         pointer m_ptr;
     };
 
+    Iterator advance(Iterator& it, int steps = 1)
+    {
+        for(int i = 0; i < steps; i++)
+            ++it;
+        return it;
+    }
+
     //Iterator begin() { return Iterator(&(*nodes.begin())); }
     Iterator begin()
     {
@@ -169,7 +176,7 @@ public:
             volatile int a = 2;
         if(depth > 1000)
             return nullNode;
-        if(x > getRootX() + getRootWidth()/2 || x < getRootX() - getRootWidth()/2 || y > getRootY() + getRootHeight()/2 || y < getRootY() - getRootHeight()/2)
+        if(x > getRootX() + getRootWidth()/2 || x < getRootX() - getRootWidth()/2 || y > getRootY() + getRootHeight()/2 || y < getRootY() - getRootHeight()/2) // outside boundaries
             return nodes.at(0);
         if(node.x + node.width/2 < x || node.x - node.width/2 > x || node.y + node.height/2 < y || node.y - node.height/2 > y)
             return locateNodeByPosition(*(node.parent), x, y, depth + 1);
@@ -851,6 +858,60 @@ public:
     int QuadrantByPoint(QuadNode& reference, T& data)
     {
         return QuadrantByPoint(reference.x, reference.y, data.x, data.y);
+    }
+
+    bool before(const Iterator& a, const Iterator& b)
+    {
+        auto& node1 = *a;
+        auto& node2 = *b;
+        // if(node1.x < node2.x)
+        //     return true;
+        float currentX = getRootX();
+        float currentY = getRootY();
+        float currentWidth = getRootWidth();
+        float currentHeight = getRootHeight();
+
+        if(a == b)
+            return false;
+
+        while(true)
+        {
+            int quadrant1 = QuadrantByPoint(currentX, currentY, node1);
+            int quadrant2 = QuadrantByPoint(currentX, currentY, node2);
+            if(quadrant1 < quadrant2)
+                return true;
+            else if(quadrant1 > quadrant2)
+                return false;
+            else
+            {
+                if(quadrant1 == 0)
+                {
+                    currentX += currentWidth/4;
+                    currentY += currentHeight/4;
+                }
+                else if(quadrant1 == 1)
+                {
+                    currentX -= currentWidth/4;
+                    currentY += currentHeight/4;
+                }
+                else if(quadrant1 == 2)
+                {
+                    currentX -= currentWidth/4;
+                    currentY -= currentHeight/4;
+                }
+                else if(quadrant1 == 3)
+                {
+                    currentX += currentWidth/4;
+                    currentY -= currentHeight/4;
+                }
+                currentWidth /= 2;
+                currentHeight /= 2;
+            }
+        }
+
+
+        std::cout << "Error in before function" << std::endl; // should never happen REMOVE_LATER
+        return false;
     }
 
    /*  QuadTree()

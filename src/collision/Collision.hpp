@@ -176,10 +176,10 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 
     if (collided)
     {
-		figure1.x += displacement1.x * -1 * modifier;
-		figure1.y += displacement1.y * -1 * modifier;
-		figure2.x += displacement2.x * 1 * modifier;
-		figure2.y += displacement2.y * 1 * modifier;
+		figure1.displacementX += displacement1.x * -1 * modifier;
+		figure1.displacementY += displacement1.y * -1 * modifier;
+		figure2.displacementX += displacement2.x * 1 * modifier;
+		figure2.displacementY += displacement2.y * 1 * modifier;
 
 
         // Normalize collision normal

@@ -21,11 +21,13 @@ unsigned long getNextId()
 
 template <unsigned int N>
 struct Figure{
-    float x = 0;
-    float y = 0;
+    float x = 0.f;
+    float y = 0.f;
     float velX = 0.1f;
     float velY = 0.1f;
     bool collisionChecked = false;
+    float displacementX = 0.0f;
+    float displacementY = 0.0f;
 
     Figure(float _x, float _y, float _velX, float _velY, float scale = 2.f)
     : x(_x)
@@ -40,6 +42,14 @@ struct Figure{
 			model[i] = { scale * std::cos(fTheta * i), scale * std::sin(fTheta * i) };
 			calculatedPoints[i] = { scale * std::cos(fTheta * i), scale * std::sin(fTheta * i) };
 		}
+    }
+
+    void displace()
+    {
+        x += displacementX;
+        y += displacementY;
+        displacementX = 0.f;
+        displacementY = 0.f;
     }
 
     unsigned long getId() const

@@ -50,7 +50,10 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
 
             for(auto& node : tree)
                 for(int i = 0; i < node.elements; i++)
+                {
                     node.data.at(i).collisionChecked = false;
+                    node.data.at(i).displace();
+                }
 }
 
 template<typename T>
