@@ -32,7 +32,7 @@ void testTree() // TODO: update member (first find member...)
 
 // float scale = 0.001f;
 //     Figure ttt{3000.f, 3000.f, 0.f, 0.f, scale};
-// float r =ttt.getR();
+// float r =ttt.R;
 // tree.add(ttt);
 
 //     for (int i = 0; i < TREE_THRESHHOLD + 1; i++)
@@ -114,28 +114,28 @@ void testTree() // TODO: update member (first find member...)
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).y -= (*c).data.at(0).getR();
+                    (*c).data.at(0).y -= (*c).data.at(0).R;
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
                 {
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).y += (*c).data.at(0).getR();
+                    (*c).data.at(0).y += (*c).data.at(0).R;
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
                 {
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).x -= (*c).data.at(0).getR();
+                    (*c).data.at(0).x -= (*c).data.at(0).R;
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
                 {
                     auto c = tree.begin();
                     while((*c).elements == 0)
                         c.operator++();
-                    (*c).data.at(0).x += (*c).data.at(0).getR();
+                    (*c).data.at(0).x += (*c).data.at(0).R;
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::X))
                 {
