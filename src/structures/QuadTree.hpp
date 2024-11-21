@@ -155,6 +155,11 @@ public:
         return it;
     }
 
+    Iterator itrOfNode(QuadNode& node)
+    {
+        return Iterator(&node);
+    }
+
     //Iterator begin() { return Iterator(&(*nodes.begin())); }
     Iterator begin()
     {

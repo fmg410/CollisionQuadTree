@@ -4,7 +4,7 @@
 #include "Settings.hpp"
 
 template<typename T, unsigned int treshhold>
-void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)> collider, uint64_t& collisionCount, unsigned int steps = 1)
+void collideTreeOld(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)> collider, uint64_t& collisionCount, unsigned int steps = 1)
 {
     for(int m = 0; m < steps; m++)
             {
@@ -54,6 +54,106 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                     node.data.at(i).collisionChecked = false;
                     node.data.at(i).displace();
                 }
+}
+
+template<typename T, unsigned int treshhold>
+void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)> collider, uint64_t& collisionCount, unsigned int steps = 1)
+{
+    std::vector<T*> threeFigs;
+    for(int m = 0; m < steps; m++)
+    {
+        for(auto& node : tree)
+            for(int i = 0; i < node.elements; i++) // do optymalizacji przejściem przez vector TODO
+            {
+                updateSpeed(node.data.at(i), 1.f / float(steps));
+                applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+                tree.correctDataPosition(node, i);
+            }
+        for(auto& node : tree)
+        {
+            for(int i = 0; i < node.elements; i++)
+            {
+                auto& fig = node.data.at(i);
+                if(fig.x + fig.R < node.x + node.width / 2 && fig.x - fig.R > node.x - node.width / 2 && fig.y + fig.R < node.y + node.height / 2 && fig.y - fig.R > node.y - node.height / 2) // within boundaries of node
+                {
+                    fig.collisionChecked = true;
+
+                    for(int j = i + 1; j < node.elements; j++)
+                    {
+                        if(std::invoke(collider, fig, node.data.at(j), 1.f / float(steps)))
+                        {
+                            collisionCount++;
+                        }
+                    }
+                }
+
+                auto list = tree.getNodesInArea(node, node.data.at(i)); // dla dwójek
+                for(auto otherNodes : list)
+                {
+                    if(&node == otherNodes)
+                        continue;
+                    if(tree.before(tree.itrOfNode(node), tree.itrOfNode(*otherNodes))) // jak widzisz późniejszego - kolidujesz
+                    {
+                        for(int j = 0; j < otherNodes->elements; j++)
+                            if(node.data.at(i) != otherNodes->data.at(j)) // po co ten check????
+                            {
+                                if(std::invoke(collider, node.data.at(i), otherNodes->data.at(j), 1.f / float(steps)))
+                                {
+                                    collisionCount++;
+                                }
+                            }
+                    }
+                    if(!tree.before(tree.itrOfNode(node), tree.itrOfNode(*otherNodes))) // jak widzisz wcześniejszego - sprawdzasz czy cię widzi:
+                    {
+                        for(int j = 0; j < otherNodes->elements; j++)
+                        {
+                            auto othersList = tree.getNodesInArea(*otherNodes, otherNodes->data.at(j));
+                            if(std::find(othersList.begin(), othersList.end(), &node) == othersList.end()) // jak nie - kolidujesz
+                            {
+                                if(std::invoke(collider, node.data.at(i), otherNodes->data.at(j), 1.f / float(steps)))
+                                {
+                                    collisionCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if(list.size() > 2) // dla trójek
+                {
+                    threeFigs.push_back(&fig);
+                }
+
+                // for(int i = 0; i < node.elements; i++)
+                // {
+                //     if(tree.correctDataPosition(node, i))
+                //         i--;
+                // }
+            }
+        }
+
+    }
+
+    for(int i = 0; i < threeFigs.size() - 1; i++)
+    {
+        for(int j = i + 1; j < threeFigs.size(); j++)
+        {
+            if(std::invoke(collider, *(threeFigs.at(i)), *(threeFigs.at(j)), 1.f / float(steps)))
+            {
+                collisionCount++;
+            }
+        }
+    }
+
+    for(auto& node : tree)
+        for(int i = 0; i < node.elements; i++)
+        {
+            node.data.at(i).collisionChecked = false;
+            node.data.at(i).displace();
+            applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
+            tree.correctDataPosition(node, i);
+        }
+    tree.mergeTree();
 }
 
 template<typename T>

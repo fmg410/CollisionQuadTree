@@ -26,7 +26,7 @@
 
 const bool SIMULATE_BOTH = false;
 const bool SIMULATE_TREE = true;
-const bool START_PAUSED = false;
+const bool START_PAUSED = true;
 constexpr unsigned int VERTICES_COUNT = 7;
 const unsigned int TREE_THRESHHOLD = 16; // 8
 const float SCALE = 50.f;
