@@ -84,6 +84,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                 } // test czy dwójki kolidują ze sobą w jednym nodzie
                     for(int j = i + 1; j < node.elements; j++)
                     {
+                        if(broadCheck(fig, node.data.at(j)))
                         if(std::invoke(collider, fig, node.data.at(j), 1.f / float(steps)))
                         {
                             collisionCount++;
@@ -101,6 +102,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                         for(int j = 0; j < otherNodes->elements; j++)
                             if(node.data.at(i) != otherNodes->data.at(j)) // po co ten check????
                             {
+                                if(broadCheck(node.data.at(i), otherNodes->data.at(j)))
                                 if(std::invoke(collider, node.data.at(i), otherNodes->data.at(j), 1.f / float(steps)))
                                 {
                                     collisionCount++;
@@ -114,6 +116,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                             auto othersList = tree.getNodesInArea(*otherNodes, otherNodes->data.at(j));
                             if(std::find(othersList.begin(), othersList.end(), &node) == othersList.end()) // jak nie - kolidujesz
                             {
+                                if(broadCheck(node.data.at(i), otherNodes->data.at(j)))
                                 if(std::invoke(collider, node.data.at(i), otherNodes->data.at(j), 1.f / float(steps)))
                                 {
                                     collisionCount++;
@@ -142,6 +145,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
     {
         for(int j = i + 1; j < threeFigs.size(); j++)
         {
+            if(broadCheck(*(threeFigs.at(i)), *(threeFigs.at(j))))
             if(std::invoke(collider, *(threeFigs.at(i)), *(threeFigs.at(j)), 1.f / float(steps)))
             {
                 collisionCount++;
