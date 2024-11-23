@@ -181,6 +181,11 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 		figure2.displacementX += displacement2.x * 1 * modifier;
 		figure2.displacementY += displacement2.y * 1 * modifier;
 
+        // DEBUG...
+        figure1.addCollisionId(figure2.id);
+        figure2.addCollisionId(figure1.id);
+        // ...DEBUG
+
 
         // Normalize collision normal
 		collisionNormal = {displacement1.x + displacement2.x, displacement1.y + displacement2.y};

@@ -19,14 +19,14 @@ unsigned long getNextId()
     return currentId++;
 }
 
-float distance(pos a, pos b)
+float figDistance(pos a, pos b)
 {
     return sqrtf((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
 bool broadCheck(const pos& a, const pos& b, float R1, float R2)
 {
-    return distance(a, b) < R1 + R2;
+    return figDistance(a, b) < R1 + R2;
 }
 
 template <unsigned int N>
@@ -40,6 +40,27 @@ struct Figure{
     float displacementY = 0.0f;
     float R = 0.0f;
 
+
+    // DEBUG...
+    static constexpr unsigned int maxIds = 7;
+    long lastCollisionIds[maxIds] = {0, };
+    unsigned int lastCollisionIndex = 0;
+
+    void addCollisionId(unsigned long id)
+    {
+        lastCollisionIds[lastCollisionIndex] = id;
+        lastCollisionIndex = (lastCollisionIndex + 1) % maxIds;
+    }
+
+    void resetCollisionIds()
+    {
+        for(int i = 0; i < maxIds; i++)
+            lastCollisionIds[i] = 0;
+        lastCollisionIndex = 0;
+    }
+
+    // ...DEBUG
+
     Figure(float _x, float _y, float _velX, float _velY, float scale = 2.f)
     : x(_x)
     , y(_y)
@@ -47,13 +68,13 @@ struct Figure{
     , velY(_velY)
     , id(getNextId())
     {
-        calculateRadious();
         float fTheta = 3.14159f * 2.0f / N;
         for (int i = 0; i < N; i++)
 		{
 			model[i] = { scale * std::cos(fTheta * i), scale * std::sin(fTheta * i) };
 			calculatedPoints[i] = { scale * std::cos(fTheta * i), scale * std::sin(fTheta * i) };
 		}
+        calculateRadious();
     }
 
     void displace()
@@ -62,6 +83,11 @@ struct Figure{
         y += displacementY;
         displacementX = 0.f;
         displacementY = 0.f;
+    }
+
+    pos getPosition() const
+    {
+        return {x, y};
     }
 
     unsigned long getId() const
@@ -156,7 +182,7 @@ struct Figure{
         return !(*this == f);
     }
 
-private:
+public:
     pos calculatedPoints[N];
     pos model[N];
     float angle = 0.0f;

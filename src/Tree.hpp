@@ -92,7 +92,64 @@ void testTree() // TODO: update member (first find member...)
 				zoomViewAt({ event.mouseWheelScroll.x, event.mouseWheelScroll.y }, window, 1.1f, view, event.mouseWheelScroll.delta);
 			}
 
-            if (event.type == sf::Event::KeyPressed)
+            if(event.type == sf::Event::MouseButtonPressed)
+            {
+                if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                {
+                    auto x = window.mapPixelToCoords(sf::Mouse::getPosition(window)).x;
+                    auto y = window.mapPixelToCoords(sf::Mouse::getPosition(window)).y;
+                    auto& node = tree.locateNodeByPosition(x, y);
+                    float distance = figDistance(node.data.at(0).getPosition(), pos{x, y});
+                    int index = 1;
+                    for(int i = 1; i < node.elements; i++)
+                    {
+                        if(figDistance(node.data.at(i).getPosition(), pos{x, y}) < distance)
+                        {
+                            distance = figDistance(node.data.at(i).getPosition(), pos{x, y});
+                            index = i;
+                        }
+                    }
+                    if(figDistance(node.data.at(index).getPosition(), pos{x, y}) < node.data.at(index).R)
+                    {
+                        std::string figCollisions = "Collisions: ";
+                        for(int i = 0; i < node.data.at(index).lastCollisionIndex; i++)
+                        {
+                            figCollisions.append(std::to_string(node.data.at(index).lastCollisionIds[i])).append(" ; ");
+                        }
+                        std::cout << "Figure:\nId: " << node.data.at(index).getId() << "\nPos:" << node.data.at(index).x << " " << node.data.at(index).y << " " << "\nR: " << node.data.at(index).R << "\n" << figCollisions << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "No figure found" << std::endl;
+                    }
+                }
+                else if(sf::Mouse::isButtonPressed(sf::Mouse::Right))
+                {
+                    auto x = window.mapPixelToCoords(sf::Mouse::getPosition(window)).x;
+                    auto y = window.mapPixelToCoords(sf::Mouse::getPosition(window)).y;
+                    auto& node = tree.locateNodeByPosition(x, y);
+                    float distance = figDistance(node.data.at(0).getPosition(), pos{x, y});
+                    int index = 1;
+                    for(int i = 1; i < node.elements; i++)
+                    {
+                        if(figDistance(node.data.at(i).getPosition(), pos{x, y}) < distance)
+                        {
+                            distance = figDistance(node.data.at(i).getPosition(), pos{x, y});
+                            index = i;
+                        }
+                    }
+                    if(figDistance(node.data.at(index).getPosition(), pos{x, y}) < node.data.at(index).R)
+                    {
+                        std::string nodeInfo = std::string("Node:\nX: ").append(std::to_string(node.x)).append("\nY: ").append(std::to_string(node.y)).append("\nWidth: ").append(std::to_string(node.width)).append("\nHeight: ").append(std::to_string(node.height).append("\nElement count: ").append(std::to_string(node.elements)).append("\nLevel: ").append(std::to_string(tree.levelDifference(tree.getRoot(), node))));
+                        std::cout << nodeInfo << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "No figure found" << std::endl;
+                    }
+                }
+            }
+            else if (event.type == sf::Event::KeyPressed)
             {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
                 {
@@ -151,6 +208,11 @@ void testTree() // TODO: update member (first find member...)
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::J))
                 {
                     singleFrame = true;
+                }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::L))
+                {
+                    // printowanie wszystki danych o figurze, pozycja, lista kolizji id, node
+                    // patrz linia 269 tego pliku
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::H))
                 {

@@ -68,6 +68,10 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                 updateSpeed(node.data.at(i), 1.f / float(steps));
                 applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                 tree.correctDataPosition(node, i);
+
+                // DEBUG...
+                node.data.at(i).resetCollisionIds();
+                // ...DEBUG
             }
         for(auto& node : tree)
         {
@@ -77,7 +81,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                 if(fig.x + fig.R < node.x + node.width / 2 && fig.x - fig.R > node.x - node.width / 2 && fig.y + fig.R < node.y + node.height / 2 && fig.y - fig.R > node.y - node.height / 2) // within boundaries of node
                 {
                     fig.collisionChecked = true;
-
+                } // test czy dwójki kolidują ze sobą w jednym nodzie
                     for(int j = i + 1; j < node.elements; j++)
                     {
                         if(std::invoke(collider, fig, node.data.at(j), 1.f / float(steps)))
@@ -85,7 +89,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
                             collisionCount++;
                         }
                     }
-                }
+                //}
 
                 auto list = tree.getNodesInArea(node, node.data.at(i)); // dla dwójek
                 for(auto otherNodes : list)
