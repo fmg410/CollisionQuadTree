@@ -126,7 +126,219 @@ bool collide(T& figure1, T& figure2, float modifier = 1.f)
 // }
 
 template <typename T>
-bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
+bool collideAdv2(T& figure1, T& figure2, float modifier = 1.f)
+{
+    float restitution = 1.f;
+    bool collided = false;
+    T* poly1 = &figure1;
+    T* poly2 = &figure2;
+    pos displacement1 = {0, 0};
+    pos displacement2 = {0, 0};
+    pos displacementTemp = {0, 0};
+
+    pos collisionNormal = {0, 0};
+
+    for (int shape = 0; shape < 2; shape++)
+    {
+        if (shape == 1)
+        {
+            poly1 = &figure2;
+            poly2 = &figure1;
+        }
+
+        displacementTemp = {0, 0}; // Reset for the second shape
+
+        for (int p = 0; p < poly1->getSize(); p++)
+        {
+            pos line_r1s = pos{poly1->x, poly1->y};
+            pos line_r1e = *(poly1->begin() + p);
+
+            for (int q = 0; q < poly2->getSize(); q++)
+            {
+                pos line_r2s = *(poly2->begin() + q);
+                pos line_r2e = *(poly2->begin() + ((q + 1) % poly2->getSize()));
+
+                float h = (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r1e.y) - (line_r1s.x - line_r1e.x) * (line_r2e.y - line_r2s.y);
+                float t1 = ((line_r2s.y - line_r2e.y) * (line_r1s.x - line_r2s.x) + (line_r2e.x - line_r2s.x) * (line_r1s.y - line_r2s.y)) / h;
+                float t2 = ((line_r1s.y - line_r1e.y) * (line_r1s.x - line_r2s.x) + (line_r1e.x - line_r1s.x) * (line_r1s.y - line_r2s.y)) / h;
+
+                if (t1 >= 0.0f && t1 < 1.0f && t2 >= 0.0f && t2 < 1.0f)
+                {
+                    displacementTemp.x += (1.0f - t1) * (line_r1e.x - line_r1s.x);
+                    displacementTemp.y += (1.0f - t1) * (line_r1e.y - line_r1s.y);
+                    collided = true;
+
+                    // Compute collision normal
+                    collisionNormal.x = line_r1e.x - line_r1s.x;
+                    collisionNormal.y = line_r1e.y - line_r1s.y;
+                    float length = sqrtf(collisionNormal.x * collisionNormal.x + collisionNormal.y * collisionNormal.y);
+                    if (length > 0)
+                    {
+                        collisionNormal.x /= length;
+                        collisionNormal.y /= length;
+                    }
+                }
+            }
+        }
+        if (shape == 0)
+            displacement1 = displacementTemp;
+        else
+            displacement2 = displacementTemp;
+        displacementTemp = {0, 0}; // Reset for the second shape
+    }
+
+    if (collided)
+    {
+        // Apply displacements
+        figure1.displacementX += displacement1.x * -1 * modifier;
+        figure1.displacementY += displacement1.y * -1 * modifier;
+        figure2.displacementX += displacement2.x * 1 * modifier;
+        figure2.displacementY += displacement2.y * 1 * modifier;
+
+        // Velocity change based on collision normal
+        float relativeVelocityX = figure2.velX - figure1.velX;
+        float relativeVelocityY = figure2.velY - figure1.velY;
+        float velocityAlongNormal = relativeVelocityX * collisionNormal.x + relativeVelocityY * collisionNormal.y;
+
+        if (velocityAlongNormal < 0) // Only handle collisions when objects are moving towards each other
+        {
+            float impulse = -(1 + restitution) * velocityAlongNormal;
+            float inverseMass1 = 1.0f; // Assuming equal mass for simplicity
+            float inverseMass2 = 1.0f;
+
+            impulse /= (inverseMass1 + inverseMass2);
+
+            float impulseX = impulse * collisionNormal.x;
+            float impulseY = impulse * collisionNormal.y;
+
+            figure1.changeVelocityX -= impulseX * inverseMass1;
+            figure1.changeVelocityY -= impulseY * inverseMass1;
+            figure2.changeVelocityX += impulseX * inverseMass2;
+            figure2.changeVelocityY += impulseY * inverseMass2;
+        }
+
+        // DEBUG...
+        figure1.addCollisionId(figure2.id);
+        figure2.addCollisionId(figure1.id);
+        // ...DEBUG
+    }
+
+    return collided;
+}
+
+template <typename T>
+bool collideAdv(T& figure1, T& figure2, float modifier = 1.f) // Pendulum?
+{
+    bool collisionDetected = false;
+
+    // Helper function to calculate the projection of points on an axis
+    auto projectOnAxis = [](const pos* points, size_t pointCount, const pos& axis) {
+        float minProj = (points[0].x * axis.x + points[0].y * axis.y);
+        float maxProj = minProj;
+        for (size_t i = 1; i < pointCount; ++i) {
+            float projection = (points[i].x * axis.x + points[i].y * axis.y);
+            if (projection < minProj) minProj = projection;
+            if (projection > maxProj) maxProj = projection;
+        }
+        return std::make_pair(minProj, maxProj);
+    };
+
+    // Helper function to check if two projection ranges overlap
+    auto overlap = [](std::pair<float, float> proj1, std::pair<float, float> proj2) {
+        return proj1.second >= proj2.first && proj2.second >= proj1.first;
+    };
+
+    // Helper function to calculate the overlap depth between two projections
+    auto overlapDepth = [](std::pair<float, float> proj1, std::pair<float, float> proj2) {
+        return std::min(proj1.second - proj2.first, proj2.second - proj1.first);
+    };
+
+    pos mtvAxis = {0.f, 0.f}; // Minimum translation vector axis
+    float mtvDepth = std::numeric_limits<float>::max(); // Minimum overlap depth
+
+    const size_t totalAxes = figure1.getSize() + figure2.getSize();
+    pos axes[totalAxes]; // Axes to test for SAT
+
+    // Populate axes for figure1
+    for (size_t i = 0; i < figure1.getSize(); ++i) {
+        size_t next = (i + 1) % figure1.getSize();
+        pos edge = {figure1.calculatedPoints[next].x - figure1.calculatedPoints[i].x,
+                    figure1.calculatedPoints[next].y - figure1.calculatedPoints[i].y};
+        axes[i] = {-edge.y, edge.x}; // Perpendicular to the edge
+    }
+
+    // Populate axes for figure2
+    for (size_t i = 0; i < figure2.getSize(); ++i) {
+        size_t next = (i + 1) % figure2.getSize();
+        pos edge = {figure2.calculatedPoints[next].x - figure2.calculatedPoints[i].x,
+                    figure2.calculatedPoints[next].y - figure2.calculatedPoints[i].y};
+        axes[figure1.getSize() + i] = {-edge.y, edge.x}; // Perpendicular to the edge
+    }
+
+    // Normalize axes
+    for (size_t i = 0; i < totalAxes; ++i) {
+        float magnitude = sqrtf(axes[i].x * axes[i].x + axes[i].y * axes[i].y);
+        axes[i].x /= magnitude;
+        axes[i].y /= magnitude;
+    }
+
+    // Perform SAT on all axes
+    for (size_t i = 0; i < totalAxes; ++i) {
+        auto proj1 = projectOnAxis(figure1.calculatedPoints, figure1.getSize(), axes[i]);
+        auto proj2 = projectOnAxis(figure2.calculatedPoints, figure2.getSize(), axes[i]);
+
+        if (!overlap(proj1, proj2)) {
+            // No collision
+            return false;
+        }
+
+        float depth = overlapDepth(proj1, proj2);
+        if (depth < mtvDepth) {
+            mtvDepth = depth;
+            mtvAxis = axes[i];
+        }
+    }
+
+    // Collision detected
+    collisionDetected = true;
+
+    // Resolve overlap using the minimum translation vector
+    pos displacement = {mtvAxis.x * mtvDepth, mtvAxis.y * mtvDepth};
+
+    // Push figures apart based on displacement
+    pos center1 = {figure1.x, figure1.y};
+    pos center2 = {figure2.x, figure2.y};
+    pos direction = {center2.x - center1.x, center2.y - center1.y};
+    float dotProduct = direction.x * mtvAxis.x + direction.y * mtvAxis.y;
+
+    if (dotProduct < 0.f) {
+        displacement.x = -displacement.x;
+        displacement.y = -displacement.y;
+    }
+
+    figure1.displacementX -= displacement.x * 0.5f;
+    figure1.displacementY -= displacement.y * 0.5f;
+    figure2.displacementX += displacement.x * 0.5f;
+    figure2.displacementY += displacement.y * 0.5f;
+
+    // Update velocities (elastic collision)
+    pos relativeVelocity = {figure2.velX - figure1.velX, figure2.velY - figure1.velY};
+    float impulseMagnitude = 2.f * (relativeVelocity.x * mtvAxis.x + relativeVelocity.y * mtvAxis.y) /
+                             (1 / modifier + 1 / modifier);
+
+    pos impulse = {impulseMagnitude * mtvAxis.x, impulseMagnitude * mtvAxis.y};
+
+    figure1.changeVelocityX -= impulse.x * modifier;
+    figure1.changeVelocityY -= impulse.y * modifier;
+    figure2.changeVelocityX += impulse.x * modifier;
+    figure2.changeVelocityY += impulse.y * modifier;
+
+    return collisionDetected;
+}
+
+
+template <typename T>
+bool collideAdv1(T& figure1, T& figure2, float modifier = 1.f)
 {
     bool collided = false;
     T* poly1 = &figure1;
@@ -172,6 +384,7 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
 			displacement1 = displacementTemp;
 		else
 			displacement2 = displacementTemp;
+        //displacementTemp = {0, 0}; // CZEMU NIE DZIALA DEBUG
     }
 
     if (collided)
@@ -206,7 +419,7 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
         float velocityAlongNormal = relativeVelocity.x * collisionNormal.x + relativeVelocity.y * collisionNormal.y;
 
         // If velocities are separating, do nothing
-        if (velocityAlongNormal > 0)
+        if (velocityAlongNormal > 0) // USUNAC DEBUG???
             return collided;
 
         // Restitution (bounciness)
@@ -222,10 +435,10 @@ bool collideAdv(T& figure1, T& figure2, float modifier = 1.f)
         };
 
         // Apply impulse to both figures
-        figure1.velX -= impulse.x;
-        figure1.velY -= impulse.y;
-        figure2.velX += impulse.x;
-        figure2.velY += impulse.y;
+        figure1.changeVelocityX -= impulse.x;
+        figure1.changeVelocityY -= impulse.y;
+        figure2.changeVelocityX += impulse.x;
+        figure2.changeVelocityY += impulse.y;
     }
 
     return collided;

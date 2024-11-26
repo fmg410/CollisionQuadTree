@@ -49,6 +49,7 @@ void testTree() // TODO: update member (first find member...)
     bool pause = START_PAUSED;
     bool singleFrame = false;
     unsigned int iterations = 0;
+    bool debugFiguresShown = false;
 
     std::list<QuadTree<Figure, TREE_THRESHHOLD>> snapshots;
 
@@ -94,6 +95,7 @@ void testTree() // TODO: update member (first find member...)
 
             if(event.type == sf::Event::MouseButtonPressed)
             {
+                debugFiguresShown = true;
                 if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
                 {
                     auto x = window.mapPixelToCoords(sf::Mouse::getPosition(window)).x;
@@ -116,7 +118,8 @@ void testTree() // TODO: update member (first find member...)
                         {
                             figCollisions.append(std::to_string(node.data.at(index).lastCollisionIds[i])).append(" ; ");
                         }
-                        std::cout << "Figure:\nId: " << node.data.at(index).getId() << "\nPos:" << node.data.at(index).x << " " << node.data.at(index).y << " " << "\nR: " << node.data.at(index).R << "\n" << figCollisions << std::endl;
+                        std::cout << "Figure:\nId: " << node.data.at(index).getId() << "\nR: " << node.data.at(index).R << "\nPos: " << node.data.at(index).x << " " << node.data.at(index).y << "\nDisplacement X Y: " << node.data.at(index).displacementX << " " << node.data.at(index).displacementY <<
+                          "\nVel: " << node.data.at(index).velX << " " << node.data.at(index).velY << "\nVel change: " << node.data.at(index).changeVelocityX << " " << node.data.at(index).changeVelocityY << "\n" << figCollisions << std::endl;
                     }
                     else
                     {
@@ -268,6 +271,11 @@ std::cout << "capacity:" << tree.nodes.capacity() << std::endl;
                 std::cout << "Collision count : " << collisionCount << std::endl;
                 std::cout << "CollisionQuadTree : Average collision detection time for " << MAX_ITERATIONS << " iterations for " << CURRENT_ELEMENTS << " elements with " << Figure::size() << " vertices is : " << average * 1.f / timings.size() << " nanoseconds" << std::endl;
                 break;
+            }
+            if(debugFiguresShown)
+            {
+                std::cout << "-----------------------------" << std::endl;
+                debugFiguresShown = false;
             }
             if(MAX_ITERATIONS != -1)
                 iterations++;

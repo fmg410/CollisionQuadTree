@@ -13,6 +13,8 @@
     }
 }; */
 
+const float MAX_VEL = 6.f;
+
 unsigned long getNextId()
 {
     static unsigned long currentId = 1;
@@ -38,6 +40,8 @@ struct Figure{
     bool collisionChecked = false;
     float displacementX = 0.0f;
     float displacementY = 0.0f;
+    float changeVelocityX = 0.0f;
+    float changeVelocityY = 0.0f;
     float R = 0.0f;
 
 
@@ -79,10 +83,32 @@ struct Figure{
 
     void displace()
     {
+        displacementX = std::max(-R, std::min(R, displacementX));
+        displacementY = std::max(-R, std::min(R, displacementY));
         x += displacementX;
         y += displacementY;
+        // resetDisplacement();
+    }
+
+    void resetDisplacement()
+    {
         displacementX = 0.f;
         displacementY = 0.f;
+    }
+
+    void changeVelocity()
+    {
+        velX += changeVelocityX;
+        velY += changeVelocityY;
+        velX = std::max(-MAX_VEL, std::min(MAX_VEL, velX));
+        velY = std::max(-MAX_VEL, std::min(MAX_VEL, velY));
+        //resetVelocityChange();
+    }
+
+    void resetVelocityChange()
+    {
+        changeVelocityX = 0.f;
+        changeVelocityY = 0.f;
     }
 
     pos getPosition() const

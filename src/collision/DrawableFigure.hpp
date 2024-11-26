@@ -17,13 +17,15 @@ struct DrawableFigure : sf::Drawable, sf::Transformable
 
     DrawableFigure(const T& figure, sf::Color color = sf::Color::Red)
     {
-        m_vertices[0].position = sf::Vector2f(figure.x, figure.y);
-        m_vertices[0].color = color;
         for(int i = 0; i < T::size(); i++)
         {
             m_vertices[i].position = sf::Vector2f((figure.cbegin() + i)->x, (figure.cbegin() + i)->y);
             m_vertices[i].color = color;
         }
+        // DEBUG...
+        m_vertices[0].color = sf::Color::Green;
+        m_vertices[T::size() - 1].color = sf::Color::Blue;
+        // ...DEBUG
         /* m_vertices[T::size() + 1].position = sf::Vector2f((figure.cbegin())->x, (figure.cbegin())->y);
         m_vertices[T::size() + 1].color = color; */
     }

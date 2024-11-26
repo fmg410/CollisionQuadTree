@@ -65,6 +65,8 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
         for(auto& node : tree)
             for(int i = 0; i < node.elements; i++) // do optymalizacji przejściem przez vector TODO
             {
+                node.data.at(i).resetDisplacement();
+                node.data.at(i).resetVelocityChange();
                 updateSpeed(node.data.at(i), 1.f / float(steps));
                 applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
                 tree.correctDataPosition(node, i);
@@ -158,6 +160,7 @@ void collideTree(QuadTree<T, treshhold>& tree, std::function<bool(T&, T&, float)
         {
             node.data.at(i).collisionChecked = false;
             node.data.at(i).displace();
+            node.data.at(i).changeVelocity();
             applyBoundariesNode(node.data.at(i), tree.getRootX(), tree.getRootY(), tree.getRootWidth(), tree.getRootHeight());
             tree.correctDataPosition(node, i);
         }
